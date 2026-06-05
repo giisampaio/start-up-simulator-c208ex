@@ -16,21 +16,23 @@ import './style.css'
 const S: any = {}
 
 function reset(){
-  Object.assign(S,{t:0,extPwr:'OFF',battery:false,generator:'ON',fuelBoost:'OFF',stbyAlt:'OFF',ignition:'NORM',
+  Object.assign(S,{t:0,extPwr:'OFF',gpuConnected:false,battery:false,generator:'ON',fuelBoost:'OFF',stbyAlt:'OFF',ignition:'NORM',
     starter:false,starterMode:'OFF',avStby:'OFF',avBusTie:'OFF',av1:'OFF',av2:'OFF',emergPwr:'NORMAL',fuelCondition:'CUTOFF',
     selL:'OFF',selR:'OFF',oat:15,
     Ng:0,ITT:15,Np:0,torque:0,oilPsi:0,oilTemp:15,fflow:0,batAmps:0,busVolts:0,fuelL:1110,fuelR:1110,
-    spike:15,lit:false,peakITT:0,hotStart:false,idleReached:false,idleStable:0,rsvrSecs:45,firedStarve:false,firedRsvr:false,
+    spike:15,lightT:0,lit:false,peakITT:0,hotStart:false,idleReached:false,idleStable:0,rsvrSecs:45,firedStarve:false,firedRsvr:false,
     eisState:'off',bootT:0,genTripped:false,
     starterTimer:0,starterMax:0,starterCycleExceed:false,
     fuelNgAtIntro:null,oilAtIntro:null,boostAtIntro:null,emergAtStart:null,pwrAtStart:null,selsAtStart:null,ngAtStarterCut:null,idleITT:null,
     log:[],firedHot:false,firedIdle:false,finished:false})
   S.ITT=15;S.oilTemp=15;S.spike=15
-  renderSwitches();renderSelectors();renderEmerg();renderFcl();renderOat()
+  renderSwitches();renderSelectors();renderEmerg();renderFcl();renderOat();renderGpu()
   document.getElementById('verdict')!.className='verdict';document.getElementById('log')!.innerHTML=''
   logMsg('Pronto. Abra as seletoras (overhead), ligue a bateria e siga o fluxo.','')
 }
-const pwr=()=>S.battery||S.extPwr==='BUS'
+const GPU_V=27.5
+const pwr=()=>S.battery||(S.gpuConnected&&S.extPwr==='BUS')
+const canCrankNow=()=>S.battery||(S.gpuConnected&&S.extPwr==='STARTER')
 const BOOTDUR=3.0
 const BOOTLINES:[number,string][]=[[0.3,'AHRS ALIGN'],[0.9,'AIR DATA'],[1.5,'ENGINE / EIS'],[2.0,'DATABASE']]
 function updBootLines(t:number){document.getElementById('eb-lines')!.innerHTML=BOOTLINES.filter(l=>t>=l[0]).map(l=>`<div><span>${l[1]}</span><span class="ok">OK</span></div>`).join('')}
@@ -104,7 +106,7 @@ function setSw(k:string,v:string){ensureAudio()
     renderSwitches();return}
   S[k]=v
   if(k==='fuelBoost')logMsg('Fuel Boost → '+v,v==='OFF'?'e-warn':'')
-  else if(k==='extPwr')logMsg('External Power → '+v,'')
+  else if(k==='extPwr'){logMsg('External Power → '+v,(v!=='OFF'&&!S.gpuConnected)?'e-warn':'');if(v!=='OFF'&&!S.gpuConnected)logMsg('Nenhuma fonte externa conectada — conecte a GPU para ter efeito.','e-warn')}
   else if(k==='ignition')logMsg('Ignition → '+v,'')
   else if(k==='generator'){if(v==='TRIP'){S.genTripped=true;logMsg('Generator TRIP — gerador desconectado','e-warn')}else if(v==='RESET'){S.genTripped=false;logMsg('Generator RESET — gerador rearmado','e-good')}}
   else if(k==='stbyAlt')logMsg('Stby Alt Pwr → '+v,'')
@@ -130,6 +132,8 @@ document.getElementById('fcl')!.addEventListener('click',e=>{const b=(e.target a
   if(v==='LOW'||v==='HIGH'){if(!S.lit&&S.fuelNgAtIntro===null){S.fuelNgAtIntro=S.Ng;S.oilAtIntro=S.oilPsi;S.boostAtIntro=S.fuelBoost;logMsg('FUEL CONDITION → '+(v==='LOW'?'LOW IDLE':'HIGH IDLE')+' — introduzindo combustível',S.Ng>=12?'':'e-bad')}else logMsg('FUEL CONDITION → '+(v==='LOW'?'LOW IDLE':'HIGH IDLE'),'');S.fuelCondition=v}
   else{logMsg('FUEL CONDITION → CUTOFF',S.lit?'e-warn':'');if(S.lit){S.lit=false;logMsg('Combustível cortado — motor desliga','e-warn')}S.fuelCondition='CUTOFF'}renderFcl()})
 document.getElementById('oatseg')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;ensureAudio();S.oat=parseFloat(b.dataset.v!);if(!S.lit){S.ITT=S.oat;S.oilTemp=S.oat;S.spike=S.oat}renderOat()})
+function renderGpu(){document.querySelectorAll('#gpuseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',(((b as HTMLElement).dataset.gpu==='on')===S.gpuConnected)))}
+document.getElementById('gpuseg')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;ensureAudio();const on=b.dataset.gpu==='on';if(on!==S.gpuConnected){S.gpuConnected=on;logMsg('Fonte externa (GPU) '+(on?'CONECTADA (~27,5 V) — selecione EXT POWER em BUS/STARTER':'desconectada'),on?'e-good':'e-warn')}renderGpu()})
 
 /* ---------- gauges redondos ---------- */
 const RG:any[]=[
@@ -194,22 +198,47 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   if(S.lit&&S.rsvrSecs<=0&&!S.firedStarve){S.firedStarve=true;S.lit=false;logMsg('Reservatório esgotado — motor apagou. Abra as seletoras!','e-bad')}
   const fuelAvail=S.fuelBoost!=='OFF'&&S.rsvrSecs>0
   if(S.starter){S.starterTimer+=dt;S.starterMax=Math.max(S.starterMax,S.starterTimer);if(S.starterTimer>30&&!S.starterCycleExceed){S.starterCycleExceed=true;logMsg('Ciclo do starter excedeu 30 s!','e-bad')}}
-  if(!S.lit&&(S.fuelCondition==='LOW'||S.fuelCondition==='HIGH')&&ignOn&&fuelAvail&&P){S.lit=true
-    let pk=950-(S.Ng-12)*18;if(!S.starter)pk+=220;if(S.emergPwr!=='NORMAL')pk+=320;if(S.Ng<8)pk+=200;pk=Math.max(620,pk);S.spike=pk
-    logMsg('Light-off — ITT subindo (pico ~'+pk.toFixed(0)+'°)',pk>1090?'e-bad':(pk>850?'e-warn':'e-good'))}
-  let tNg,r;if(S.lit){if(S.starter){tNg=idleNg()+3;r=.6}else if(S.Ng>=SELF){tNg=idleNg();r=.5}else{tNg=0;r=.4}}else{const crank=S.starter&&P&&(S.battery||S.extPwr==='STARTER')&&(S.starterMode!=='MOTOR'||S.ignition==='NORM');tNg=crank?18:0;r=crank?.9:.5}
+  if(!S.lit&&(S.fuelCondition==='LOW'||S.fuelCondition==='HIGH')&&ignOn&&fuelAvail&&P){S.lit=true;S.lightT=0
+    logMsg('Light-off — combustível inflamou; observe o pico de ITT',S.Ng<10?'e-warn':'e-good')}
+  if(S.lit)S.lightT+=dt
+  // --- Ng (gerador de gases) ---
+  // Após o light-off há ~2,5 s de fase de "light" (Ng quase parado) enquanto a ITT dá o pico;
+  // só depois o motor acelera até o idle.
+  let tNg,r
+  if(S.lit){
+    if(S.starter&&S.lightT<2.5){tNg=Math.max(S.Ng,12);r=0.25}
+    else if(S.starter){tNg=idleNg()+3;r=0.28}
+    else if(S.Ng>=SELF){tNg=idleNg();r=0.4}
+    else{tNg=0;r=0.4}
+  }else{
+    const crank=S.starter&&P&&canCrankNow()&&(S.starterMode!=='MOTOR'||S.ignition==='NORM')
+    const gpuStartC=S.gpuConnected&&S.extPwr==='STARTER'
+    tNg=crank?(gpuStartC?23:20):0;r=crank?(gpuStartC?0.95:0.8):0.5
+  }
   S.Ng+=(tNg-S.Ng)*r*dt;if(S.Ng<0)S.Ng=0
-  const idleITTv=(S.fuelCondition==='HIGH'?660:620)+Math.max(0,(S.oat-15))*3.2
-  if(S.lit){let tg=idleITTv;if(S.Ng<SELF&&!S.starter)tg=1050+(SELF-S.Ng)*8;S.spike+=(tg-S.spike)*1.1*dt;S.ITT=S.spike}else S.ITT+=(S.oat-S.ITT)*0.6*dt
+  // --- Fuel flow (PPH) --- EMERG fora do NORMAL despeja excesso de combustível
+  const ffBase=S.lit?(S.fuelCondition==='HIGH'?150:110):0
+  const ffTarget=ffBase*(S.lit&&S.emergPwr!=='NORMAL'?1.7:1)
+  S.fflow+=(ffTarget-S.fflow)*1.6*dt
+  // --- ITT (física) --- temperatura de equilíbrio = idle + "bump" (combustível/ar): muito
+  // combustível com pouco ar (Ng baixo) => pico; atraso térmico faz a ITT subir/descer suave.
+  const ittIdle=(S.fuelCondition==='HIGH'?665:625)+Math.max(0,(S.oat-15))*2.5
+  const bump=S.lit?3.3*S.fflow*Math.max(0,(SELF-S.Ng))/SELF:0
+  const ittEq=S.lit?(ittIdle+bump):S.oat
+  S.ITT+=(ittEq-S.ITT)*(S.lit?2.0:1.0)*dt
   S.peakITT=Math.max(S.peakITT,S.ITT);if(S.ITT>1090&&!S.firedHot){S.firedHot=true;S.hotStart=true;logMsg('⚠ HOT START — ITT > 1090°C! Leve FUEL CONDITION a CUTOFF','e-bad')}
   S.oilPsi+=((S.Ng<3?0:Math.min(S.lit?95:140,S.Ng*1.55))-S.oilPsi)*1.1*dt
   S.oilTemp+=(((S.lit?42:S.oat))-S.oilTemp)*0.05*dt
   S.Np+=(((S.lit&&S.Ng>50)?600+(S.Ng-50)*16:(S.lit&&S.Ng>45?(S.Ng-45)*40:0))-S.Np)*0.7*dt
-  S.fflow+=(((S.lit)?(S.fuelCondition==='HIGH'?150:110):0)-S.fflow)*1.0*dt
   S.torque+=(((S.lit&&S.Np>300)?150:0)-S.torque)*0.6*dt
+  // --- Elétrico (bateria + GPU) ---
   const genOn=S.lit&&S.Ng>50&&!S.starter&&!S.genTripped
-  S.busVolts+=((!P?0:(genOn?28.5:(S.starter?22.2:24.2)))-S.busVolts)*2.2*dt
-  S.batAmps+=((!P?0:(S.starter?(S.extPwr==='STARTER'?-15:-190):(genOn?6:-3)))-S.batAmps)*2.5*dt
+  const gpuBus=S.gpuConnected&&S.extPwr==='BUS'        // GPU alimenta o barramento (~27,5 V)
+  const gpuStart=S.gpuConnected&&S.extPwr==='STARTER'  // GPU alimenta o starter (poupa a bateria)
+  let vT;if(!P)vT=0;else if(genOn)vT=28.5;else if(gpuBus)vT=GPU_V;else if(S.starter&&!gpuStart)vT=22.2;else vT=24.2
+  S.busVolts+=(vT-S.busVolts)*2.2*dt
+  let aT;if(!P)aT=0;else if(S.starter)aT=gpuStart?-12:-190;else if(genOn)aT=6;else if(gpuBus)aT=2;else aT=-3
+  S.batAmps+=(aT-S.batAmps)*2.5*dt
   if(S.lit){const burn=S.fflow/3600*dt;if(S.selL==='ON')S.fuelL-=burn*(S.selR==='ON'?.5:1);if(S.selR==='ON')S.fuelR-=burn*(S.selL==='ON'?.5:1)}
   if(S.lit&&!S.starter&&Math.abs(S.Ng-idleNg())<6&&S.ITT<720){S.idleStable+=dt;if(S.idleStable>1.5&&!S.firedIdle){S.firedIdle=true;S.idleReached=true;S.idleITT=S.ITT;logMsg('Idle estável — motor em auto-sustento ✓','e-good')}}else S.idleStable=0
   if(S.idleReached)S.idleITT=S.ITT
