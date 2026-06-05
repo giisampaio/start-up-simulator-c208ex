@@ -17,8 +17,22 @@
 <div class="app">
   <header><div class="tail">Cessna 208B · PT6A-140 · G1000</div><h1>Simulador de Partida</h1></header>
 
-  <!-- INSTRUMENTOS (fixos no topo no celular / coluna direita no desktop) -->
-  <div class="rightcol">
+  <!-- ESQUERDA (desktop): overhead + painel de switches -->
+  <div class="colL">
+    <div class="overhead">
+      <div class="oh-title">Painel Superior (Overhead) — Fuel Tank Selectors</div>
+      <div class="fs-row" id="selectors"></div>
+      <div class="placard">332 GAL COM AMBOS ON · MÁX DESBALANÇO EM VOO 200 LB</div>
+    </div>
+
+    <div class="panel swcard">
+      <div class="ptitle" style="margin-bottom:8px">Painel Lateral Esquerdo</div>
+      <div class="swpanel" id="swpanel"></div>
+    </div>
+  </div>
+
+  <!-- DIREITA (desktop): EIS + pedestal -->
+  <div class="colR">
   <section class="instruments">
     <div class="eis" id="eis">
       <div class="eis-content">
@@ -54,8 +68,17 @@
     </div>
   </section>
 
-  <section class="sidepanel">
-    <div class="panel">
+    <div class="pedestal">
+      <div class="ped-title">Pedestal</div>
+      <div style="font-family:'Saira Condensed';font-weight:600;text-transform:uppercase;font-size:.7rem;color:#cdd4dd;margin-bottom:5px">Fuel Condition Lever</div>
+      <div class="fcl" id="fcl"><button data-fcl="CUTOFF">Cutoff</button><button data-fcl="LOW">Low Idle</button><button data-fcl="HIGH">High Idle</button></div>
+      <div class="ped-emerg" id="emergSlot"></div>
+    </div>
+  </div><!-- /colR -->
+
+  <!-- RODAPÉ full-width: configurações + registro -->
+  <div class="bottom">
+    <div class="panel configcard">
       <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between">
         <div style="min-width:200px;flex:1">
           <div class="ptitle" style="margin-bottom:6px">OAT <span style="font-weight:400;text-transform:none;font-size:.8rem;opacity:.7">(condição, não é controle do avião)</span></div>
@@ -65,37 +88,13 @@
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel logcard">
       <div class="ptitle">Registro do acionamento</div>
       <div class="log" id="log"></div>
       <div class="verdict" id="verdict"></div>
       <div class="hint">Simulador didático — modelo aproximado do POH 208BPHCUS-04 (gates de partida fiéis; física entre eles é estimada). Som da buzina ativa após o primeiro toque. Não substitui o POH/AFM nem o simulador certificado.</div>
     </div>
-  </section>
-  </div><!-- /rightcol -->
-
-  <div class="leftcol">
-  <!-- CONTROLES (entre o EIS e o log no celular / coluna esquerda no desktop) -->
-  <section class="controls">
-    <div class="overhead">
-      <div class="oh-title">Painel Superior (Overhead) — Fuel Tank Selectors</div>
-      <div class="fs-row" id="selectors"></div>
-      <div class="placard">332 GAL COM AMBOS ON · MÁX DESBALANÇO EM VOO 200 LB</div>
-    </div>
-
-    <div class="panel">
-      <div class="ptitle" style="margin-bottom:8px">Painel Lateral Esquerdo</div>
-      <div class="swpanel" id="swpanel"></div>
-    </div>
-
-    <div class="pedestal">
-      <div class="ped-title">Pedestal</div>
-      <div style="font-family:'Saira Condensed';font-weight:600;text-transform:uppercase;font-size:.7rem;color:#cdd4dd;margin-bottom:5px">Fuel Condition Lever</div>
-      <div class="fcl" id="fcl"><button data-fcl="CUTOFF">Cutoff</button><button data-fcl="LOW">Low Idle</button><button data-fcl="HIGH">High Idle</button></div>
-      <div class="ped-emerg" id="emergSlot"></div>
-    </div>
-  </section>
-  </div><!-- /leftcol -->
+  </div>
 </div>
 <script type="module" src="/src/main.ts"></script>
 </body>

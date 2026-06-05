@@ -10,13 +10,17 @@ body{
   background:radial-gradient(1200px 600px at 50% -10%,#16243a 0%,transparent 60%),linear-gradient(180deg,var(--bg2),var(--bg));
   background-attachment:fixed;color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased;
 }
-.app{max-width:1120px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom));display:flex;flex-direction:column;}
-/* mobile: wrappers somem e ordenamos os blocos: EIS, controles, log */
-.rightcol,.leftcol{display:contents;}
-header{order:0;}
+.app{max-width:1120px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;}
+/* mobile: os wrappers somem (display:contents) e ordenamos os blocos individuais:
+   EIS -> overhead -> switches -> pedestal -> config -> log */
+.colL,.colR,.bottom{display:contents;}
+header{order:0;margin-bottom:0;}
 .instruments{order:1;}
-.controls{order:2;}
-.sidepanel{order:3;}
+.overhead{order:2;}
+.swcard{order:3;}
+.pedestal{order:4;}
+.configcard{order:5;}
+.logcard{order:6;}
 header{text-align:center;margin-bottom:10px;}
 .tail{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--cyan);letter-spacing:.16em;font-size:.66rem;text-transform:uppercase;opacity:.85;}
 h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;text-transform:uppercase;margin-top:4px;}
@@ -34,24 +38,20 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
   box-shadow:0 8px 18px rgba(0,0,0,.5);
   max-height:72vh;overflow:auto;-webkit-overflow-scrolling:touch;
 }
-.controls{display:flex;flex-direction:column;gap:12px;margin-top:12px;}
-.controls > *{margin:0;}
-.sidepanel{display:flex;flex-direction:column;gap:12px;margin-top:12px;}
+/* (o posicionamento dos blocos é definido pelo flex/order acima e pelo grid abaixo) */
 
 @media(min-width:900px){
   .app{display:grid;grid-template-columns:440px 1fr;gap:14px 18px;align-items:start;}
-  .rightcol,.leftcol{display:flex;flex-direction:column;gap:12px;}
-  header{grid-column:1/-1;grid-row:1;}
-  .leftcol{grid-column:1;grid-row:2;}
-  .rightcol{grid-column:2;grid-row:2;align-self:stretch;}
-  .controls,.sidepanel{margin-top:0;}
-  /* log preenche a coluna direita até equilibrar com a esquerda */
-  .sidepanel{flex:1;}
-  .sidepanel > .panel:last-child{flex:1;display:flex;flex-direction:column;}
-  .sidepanel > .panel:last-child .log{flex:1;max-height:none;}
-  .instruments{position:relative;top:auto;margin:0;padding:0;background:none;border:none;box-shadow:none;max-height:none;overflow:visible;}
+  .colL,.colR,.bottom{display:flex;flex-direction:column;gap:12px;}
+  header{grid-column:1/-1;grid-row:1;margin-bottom:0;}
+  .colL{grid-column:1;grid-row:2;}
+  .colR{grid-column:2;grid-row:2;align-self:stretch;}
+  .bottom{grid-column:1/-1;grid-row:3;}
+  /* EIS cresce para preencher a coluna direita; o pedestal fica embaixo dele */
+  .instruments{position:relative;top:auto;margin:0;padding:0;background:none;border:none;box-shadow:none;max-height:none;overflow:visible;flex:1;}
+  .eis{padding:14px 12px;height:100%;display:flex;flex-direction:column;justify-content:center;}
   .rounds-row svg{max-width:142px;}
-  .eis{padding:14px 12px;}
+  .log{max-height:240px;}
 }
 
 /* ---------- OVERHEAD (fuel selectors) ---------- */
