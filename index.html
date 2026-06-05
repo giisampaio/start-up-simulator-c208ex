@@ -18,6 +18,7 @@
   <header><div class="tail">Cessna 208B · PT6A-140 · G1000</div><h1>Simulador de Partida</h1></header>
 
   <!-- INSTRUMENTOS (fixos no topo no celular / coluna direita no desktop) -->
+  <div class="rightcol">
   <section class="instruments">
     <div class="eis" id="eis">
       <div class="eis-content">
@@ -53,7 +54,28 @@
     </div>
   </section>
 
-  <!-- CONTROLES (rolam embaixo no celular / coluna esquerda no desktop) -->
+  <section class="sidepanel">
+    <div class="panel">
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between">
+        <div style="min-width:200px;flex:1">
+          <div class="ptitle" style="margin-bottom:6px">OAT <span style="font-weight:400;text-transform:none;font-size:.8rem;opacity:.7">(condição, não é controle do avião)</span></div>
+          <div class="seg" id="oatseg"><button data-v="-10">Frio</button><button data-v="15">Padrão</button><button data-v="42">Quente</button></div>
+        </div>
+        <div class="btns" style="flex:1;min-width:240px"><button class="btn" id="reset">Reiniciar</button><button class="btn primary" id="analyze">Analisar acionamento</button></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Registro do acionamento</div>
+      <div class="log" id="log"></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="hint">Simulador didático — modelo aproximado do POH 208BPHCUS-04 (gates de partida fiéis; física entre eles é estimada). Som da buzina ativa após o primeiro toque. Não substitui o POH/AFM nem o simulador certificado.</div>
+    </div>
+  </section>
+  </div><!-- /rightcol -->
+
+  <div class="leftcol">
+  <!-- CONTROLES (entre o EIS e o log no celular / coluna esquerda no desktop) -->
   <section class="controls">
     <div class="overhead">
       <div class="oh-title">Painel Superior (Overhead) — Fuel Tank Selectors</div>
@@ -72,24 +94,8 @@
       <div class="fcl" id="fcl"><button data-fcl="CUTOFF">Cutoff</button><button data-fcl="LOW">Low Idle</button><button data-fcl="HIGH">High Idle</button></div>
       <div class="ped-emerg" id="emergSlot"></div>
     </div>
-
-    <div class="panel">
-      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between">
-        <div style="min-width:200px;flex:1">
-          <div class="ptitle" style="margin-bottom:6px">OAT <span style="font-weight:400;text-transform:none;font-size:.8rem;opacity:.7">(condição, não é controle do avião)</span></div>
-          <div class="seg" id="oatseg"><button data-v="-10">Frio</button><button data-v="15">Padrão</button><button data-v="42">Quente</button></div>
-        </div>
-        <div class="btns" style="flex:1;min-width:240px"><button class="btn" id="reset">Reiniciar</button><button class="btn primary" id="analyze">Analisar acionamento</button></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="ptitle">Registro do acionamento</div>
-      <div class="log" id="log"></div>
-      <div class="verdict" id="verdict"></div>
-      <div class="hint">Simulador didático — modelo aproximado do POH 208BPHCUS-04 (gates de partida fiéis; física entre eles é estimada). Som da buzina ativa após o primeiro toque. Não substitui o POH/AFM nem o simulador certificado.</div>
-    </div>
   </section>
+  </div><!-- /leftcol -->
 </div>
 <script type="module" src="/src/main.ts"></script>
 </body>

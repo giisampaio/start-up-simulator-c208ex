@@ -10,7 +10,13 @@ body{
   background:radial-gradient(1200px 600px at 50% -10%,#16243a 0%,transparent 60%),linear-gradient(180deg,var(--bg2),var(--bg));
   background-attachment:fixed;color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased;
 }
-.app{max-width:1040px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom));}
+.app{max-width:1120px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom));display:flex;flex-direction:column;}
+/* mobile: wrappers somem e ordenamos os blocos: EIS, controles, log */
+.rightcol,.leftcol{display:contents;}
+header{order:0;}
+.instruments{order:1;}
+.controls{order:2;}
+.sidepanel{order:3;}
 header{text-align:center;margin-bottom:10px;}
 .tail{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--cyan);letter-spacing:.16em;font-size:.66rem;text-transform:uppercase;opacity:.85;}
 h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;text-transform:uppercase;margin-top:4px;}
@@ -30,14 +36,22 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
 }
 .controls{display:flex;flex-direction:column;gap:12px;margin-top:12px;}
 .controls > *{margin:0;}
+.sidepanel{display:flex;flex-direction:column;gap:12px;margin-top:12px;}
 
 @media(min-width:900px){
-  .app{display:grid;grid-template-columns:432px 1fr;gap:14px;align-items:start;}
-  header{grid-column:1/-1;}
-  .controls{grid-column:1;margin-top:0;}
-  .instruments{grid-column:2;position:sticky;top:12px;margin:0;padding:0;background:none;border:none;box-shadow:none;max-height:none;overflow:visible;}
-  .rounds-row svg{max-width:128px;}
-  .eis{padding:12px 10px;}
+  .app{display:grid;grid-template-columns:440px 1fr;gap:14px 18px;align-items:start;}
+  .rightcol,.leftcol{display:flex;flex-direction:column;gap:12px;}
+  header{grid-column:1/-1;grid-row:1;}
+  .leftcol{grid-column:1;grid-row:2;}
+  .rightcol{grid-column:2;grid-row:2;align-self:stretch;}
+  .controls,.sidepanel{margin-top:0;}
+  /* log preenche a coluna direita até equilibrar com a esquerda */
+  .sidepanel{flex:1;}
+  .sidepanel > .panel:last-child{flex:1;display:flex;flex-direction:column;}
+  .sidepanel > .panel:last-child .log{flex:1;max-height:none;}
+  .instruments{position:relative;top:auto;margin:0;padding:0;background:none;border:none;box-shadow:none;max-height:none;overflow:visible;}
+  .rounds-row svg{max-width:142px;}
+  .eis{padding:14px 12px;}
 }
 
 /* ---------- OVERHEAD (fuel selectors) ---------- */
