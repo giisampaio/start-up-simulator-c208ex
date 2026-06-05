@@ -100,6 +100,44 @@
     </div>
   </div>
 </div>
+
+<!-- TELA DE INICIALIZAÇÃO -->
+<div class="initov" id="initov">
+  <div class="initcard">
+    <div class="init-title">Configuração inicial</div>
+    <div class="init-sub">Cessna 208B Grand Caravan EX · PT6A-140</div>
+
+    <div class="init-sec">
+      <div class="init-lbl">Combustível</div>
+      <div class="seg" id="fuelpreset">
+        <button data-fuel="1110">Cheio</button>
+        <button data-fuel="833">¾</button>
+        <button data-fuel="555">½</button>
+        <button data-fuel="150">Reserva</button>
+      </div>
+      <div class="init-tank">
+        <label>Tanque Esquerdo <span><b id="il-l">1110</b> lb</span></label>
+        <input type="range" id="ir-l" min="0" max="1110" step="10" value="1110">
+      </div>
+      <div class="init-tank">
+        <label>Tanque Direito <span><b id="il-r">1110</b> lb</span></label>
+        <input type="range" id="ir-r" min="0" max="1110" step="10" value="1110">
+      </div>
+      <div class="init-total">Total: <b id="il-total">2220</b> lb · <b id="il-gal">331</b> gal</div>
+    </div>
+
+    <div class="init-sec">
+      <div class="init-lbl">Fonte Externa (GPU ~27,5 V)</div>
+      <div class="seg" id="initgpu">
+        <button data-gpu="off">Desconectada</button>
+        <button data-gpu="on">Conectada</button>
+      </div>
+    </div>
+
+    <button class="btn primary" id="initstart">Iniciar simulação</button>
+  </div>
+</div>
+
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

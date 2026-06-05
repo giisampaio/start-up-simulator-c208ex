@@ -16,10 +16,10 @@ import './style.css'
 const S: any = {}
 
 function reset(){
-  Object.assign(S,{t:0,extPwr:'OFF',gpuConnected:false,battery:false,generator:'ON',fuelBoost:'OFF',stbyAlt:'OFF',ignition:'NORM',
+  Object.assign(S,{t:0,extPwr:'OFF',gpuConnected:(S.initGpu??false),battery:false,generator:'ON',fuelBoost:'OFF',stbyAlt:'OFF',ignition:'NORM',
     starter:false,starterMode:'OFF',avStby:'OFF',avBusTie:'OFF',av1:'OFF',av2:'OFF',emergPwr:'NORMAL',fuelCondition:'CUTOFF',
     selL:'OFF',selR:'OFF',oat:15,
-    Ng:0,ITT:15,Np:0,torque:0,oilPsi:0,oilTemp:15,fflow:0,batAmps:0,busVolts:0,fuelL:1110,fuelR:1110,
+    Ng:0,ITT:15,Np:0,torque:0,oilPsi:0,oilTemp:15,fflow:0,batAmps:0,busVolts:0,fuelL:(S.initFuelL??1110),fuelR:(S.initFuelR??1110),
     spike:15,lightT:0,lit:false,peakITT:0,hotStart:false,idleReached:false,idleStable:0,rsvrSecs:45,firedStarve:false,firedRsvr:false,
     eisState:'off',bootT:0,genTripped:false,
     starterTimer:0,starterMax:0,starterCycleExceed:false,
@@ -272,7 +272,29 @@ function analyze(){const c:[string,boolean,string][]=[
   v.innerHTML=`<h3>${fails===0?'✓ Bom acionamento':'✗ '+fails+' problema'+(fails>1?'s':'')}</h3>`+c.map(x=>`<div class="check ${x[1]?'ok':'no'}"><span class="mk">${x[1]?'✓':'✗'}</span><span>${x[0]}${x[1]?'':' — <b>'+x[2]+'</b>'}</span></div>`).join('')
   S.finished=true;v.scrollIntoView({behavior:'smooth',block:'nearest'})}
 document.getElementById('analyze')!.addEventListener('click',analyze)
-document.getElementById('reset')!.addEventListener('click',reset)
+document.getElementById('reset')!.addEventListener('click',openInit)
+
+// ---- Tela de inicialização (combustível + fonte externa) ----
+let initGpuSel=false
+function updInitLabels(){const l=+(document.getElementById('ir-l') as HTMLInputElement).value;const r=+(document.getElementById('ir-r') as HTMLInputElement).value
+  document.getElementById('il-l')!.textContent=String(l);document.getElementById('il-r')!.textContent=String(r)
+  document.getElementById('il-total')!.textContent=String(l+r);document.getElementById('il-gal')!.textContent=String(Math.round((l+r)/6.7))}
+function syncInit(){initGpuSel=S.initGpu??false
+  ;(document.getElementById('ir-l') as HTMLInputElement).value=String(S.initFuelL??1110)
+  ;(document.getElementById('ir-r') as HTMLInputElement).value=String(S.initFuelR??1110)
+  updInitLabels()
+  document.querySelectorAll('#initgpu button').forEach(b=>(b as HTMLElement).classList.toggle('active',((b as HTMLElement).dataset.gpu==='on')===initGpuSel))}
+function openInit(){syncInit();document.getElementById('initov')!.classList.remove('hidden')}
+;['ir-l','ir-r'].forEach(id=>document.getElementById(id)!.addEventListener('input',updInitLabels))
+document.getElementById('fuelpreset')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;const v=b.dataset.fuel!;(document.getElementById('ir-l') as HTMLInputElement).value=v;(document.getElementById('ir-r') as HTMLInputElement).value=v;updInitLabels()})
+document.getElementById('initgpu')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initGpuSel=b.dataset.gpu==='on';document.querySelectorAll('#initgpu button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
+document.getElementById('initstart')!.addEventListener('click',()=>{ensureAudio()
+  S.initFuelL=+(document.getElementById('ir-l') as HTMLInputElement).value
+  S.initFuelR=+(document.getElementById('ir-r') as HTMLInputElement).value
+  S.initGpu=initGpuSel
+  reset()
+  document.getElementById('initov')!.classList.add('hidden')})
+syncInit()
 
 buildRounds();buildHB();reset();requestAnimationFrame(tick)
 
