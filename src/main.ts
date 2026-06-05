@@ -176,7 +176,8 @@ function updExtras(){document.getElementById('d-np')!.textContent=S.Np.toFixed(0
   document.getElementById('d-bat')!.textContent=S.batAmps.toFixed(0);const volt=document.getElementById('d-volt')!;volt.textContent=S.busVolts.toFixed(1)
   volt.style.color=(S.busVolts>0&&S.busVolts<23)||S.busVolts>32.5?'#ff5046':'#fff'
   document.getElementById('fq-l')!.style.height=(S.fuelL/1110*100)+'%';document.getElementById('fq-r')!.style.height=(S.fuelR/1110*100)+'%'
-  document.getElementById('d-fl')!.textContent=S.fuelL.toFixed(0);document.getElementById('d-fr')!.textContent=S.fuelR.toFixed(0)}
+  document.getElementById('d-fl')!.textContent=S.fuelL.toFixed(0);document.getElementById('d-fr')!.textContent=S.fuelR.toFixed(0)
+  const fd=document.getElementById('d-fdelta')!;const imb=Math.abs(S.fuelL-S.fuelR);fd.textContent=imb.toFixed(0);fd.style.color=imb>200?'#f0b429':'#fff'}
 
 /* ---------- CAS ---------- */
 function casActive():[string,boolean,string][]{const P=pwr();const ignOn=P&&((S.starter&&S.starterMode==='START')||S.ignition==='ON');const feeding=S.selL==='ON'||S.selR==='ON'
@@ -184,6 +185,7 @@ function casActive():[string,boolean,string][]{const P=pwr();const ignOn=P&&((S.
     ['EMERG PWR LVR',P&&S.emergPwr!=='NORMAL','r'],['VOLTS LOW',P&&S.busVolts>0&&S.busVolts<23,'r'],
     ['GENERATOR OFF',P&&(!(S.lit&&S.Ng>50&&!S.starter)||S.genTripped),'a'],['STARTER ON',S.starter,'a'],
     ['FUEL PRESS LOW',P&&S.fuelBoost==='OFF'&&S.fuelCondition!=='CUTOFF','a'],['FUEL BOOST ON',S.fuelBoost==='ON','a'],
+    ['FUEL IMBALANCE',P&&Math.abs(S.fuelL-S.fuelR)>200,'a'],
     ['IGNITION ON',ignOn,'w']]}
 function drawCAS(){const act=casActive().filter(m=>m[1]);const el=document.getElementById('cas-list')!
   el.innerHTML=act.length?act.map(m=>`<div class="cas-msg ${m[2]}">${m[0]}</div>`).join(''):`<div class="cas-empty">— sem mensagens —</div>`}
