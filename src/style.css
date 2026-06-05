@@ -41,17 +41,20 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
 /* (o posicionamento dos blocos é definido pelo flex/order acima e pelo grid abaixo) */
 
 @media(min-width:900px){
-  .app{display:grid;grid-template-columns:440px 1fr;gap:14px 18px;align-items:start;}
+  .app{display:grid;grid-template-columns:460px 300px;gap:14px 18px;align-items:start;justify-content:center;}
   .colL,.colR,.bottom{display:flex;flex-direction:column;gap:12px;}
-  header{grid-column:1/-1;grid-row:1;margin-bottom:0;}
+  header{grid-column:1/-1;grid-row:1;margin-bottom:0;text-align:center;}
   .colL{grid-column:1;grid-row:2;}
-  .colR{grid-column:2;grid-row:2;align-self:stretch;}
+  .colR{grid-column:2;grid-row:2;}
   .bottom{grid-column:1/-1;grid-row:3;}
-  /* EIS cresce para preencher a coluna direita; o pedestal fica embaixo dele */
-  .instruments{position:relative;top:auto;margin:0;padding:0;background:none;border:none;box-shadow:none;max-height:none;overflow:visible;flex:1;}
-  .eis{padding:14px 12px;height:100%;display:flex;flex-direction:column;justify-content:center;}
-  .rounds-row svg{max-width:142px;}
-  .log{max-height:240px;}
+  /* EIS como a FAIXA VERTICAL do G1000: gauges empilhados + leituras em coluna única */
+  .instruments{position:relative;top:auto;margin:0;padding:0;background:none;border:none;box-shadow:none;max-height:none;overflow:visible;}
+  .eis{padding:12px 12px;}
+  .rounds-row{flex-direction:column;align-items:center;gap:2px;}
+  .rounds-row svg{max-width:160px;}
+  .readouts{grid-template-columns:1fr;gap:0;}
+  .readouts > div:empty{display:none;}
+  .log{max-height:220px;}
 }
 
 /* ---------- OVERHEAD (fuel selectors) ---------- */
