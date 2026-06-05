@@ -1,0 +1,15 @@
+{
+  "name": "Caravan EX — Simulador de Partida",
+  "short_name": "Caravan EX",
+  "description": "Simulador de partida do Cessna 208B Grand Caravan EX (PT6A-140 / G1000)",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0e14",
+  "theme_color": "#0a0e14",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

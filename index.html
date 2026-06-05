@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Caravan EX — Simulador de Partida (G1000)</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+  <header><div class="tail">Cessna 208B · PT6A-140 · G1000</div><h1>Simulador de Partida</h1></header>
+
+  <!-- INSTRUMENTOS (fixos no topo no celular / coluna direita no desktop) -->
+  <section class="instruments">
+    <div class="eis" id="eis">
+      <div class="eis-content">
+        <div class="rounds-row" id="rounds"></div>
+        <div class="cas">
+          <div class="cas-h">CAS</div>
+          <div id="cas-list"></div>
+        </div>
+        <div class="readouts">
+          <div class="digi"><span class="dl">PROP RPM</span><span class="dv" id="d-np" style="color:var(--green)">0</span></div>
+          <div class="digi"><span class="dl">FFLOW PPH</span><span class="dv" id="d-ff">0</span></div>
+          <div class="hbar"><div class="hl"><span>OIL PSI</span><b id="d-oilp">0</b></div><div class="htrack" id="t-oilp"></div></div>
+          <div class="hbar"><div class="hl"><span>OIL °C</span><b id="d-oilt">15</b></div><div class="htrack" id="t-oilt"></div></div>
+          <div class="digi"><span class="dl">BAT AMPS</span><span class="dv" id="d-bat">0</span></div>
+          <div class="digi"><span class="dl">BUS VOLTS</span><span class="dv" id="d-volt">0.0</span></div>
+          <div class="digi" style="border:none"><span class="dl">A-ICE GAL</span><span class="dv" id="d-aice" style="color:var(--green)">4.7</span></div>
+          <div></div>
+          <div class="fuelqty" style="grid-column:1/-1">
+            <div class="fq"><div class="fql">FUEL L · LBS</div><div class="fqt"><div class="fqfill" id="fq-l"></div></div><div class="fqv" id="d-fl">0</div></div>
+            <div class="fq"><div class="fql">FUEL R · LBS</div><div class="fqt"><div class="fqfill" id="fq-r"></div></div><div class="fqv" id="d-fr">0</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="eis-off">Display Off<span>Ligue AVIONICS 1</span></div>
+      <div class="eis-boot">
+        <svg class="prop eis-prop" viewBox="0 0 100 100" width="58" height="58" aria-hidden="true"><g class="blades"><ellipse cx="50" cy="23" rx="5.5" ry="25" fill="#9fb0c4"/><ellipse cx="50" cy="23" rx="5.5" ry="25" fill="#9fb0c4" transform="rotate(120 50 50)"/><ellipse cx="50" cy="23" rx="5.5" ry="25" fill="#9fb0c4" transform="rotate(240 50 50)"/></g><circle cx="50" cy="50" r="10" fill="#cfd6df" stroke="#5cc8ff" stroke-width="2"/></svg>
+        <div class="eb-model">Grand Caravan 208B EX</div>
+        <div class="eb-sub">Start Up Simulator</div>
+        <div class="eb-by">by Giovane Sampaio</div>
+        <div class="eb-lines" id="eb-lines"></div>
+        <div class="eb-bar"><div class="eb-fill" id="eb-fill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTROLES (rolam embaixo no celular / coluna esquerda no desktop) -->
+  <section class="controls">
+    <div class="overhead">
+      <div class="oh-title">Painel Superior (Overhead) — Fuel Tank Selectors</div>
+      <div class="fs-row" id="selectors"></div>
+      <div class="placard">332 GAL COM AMBOS ON · MÁX DESBALANÇO EM VOO 200 LB</div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle" style="margin-bottom:8px">Painel Lateral Esquerdo</div>
+      <div class="swpanel" id="swpanel"></div>
+    </div>
+
+    <div class="pedestal">
+      <div class="ped-title">Pedestal</div>
+      <div style="font-family:'Saira Condensed';font-weight:600;text-transform:uppercase;font-size:.7rem;color:#cdd4dd;margin-bottom:5px">Fuel Condition Lever</div>
+      <div class="fcl" id="fcl"><button data-fcl="CUTOFF">Cutoff</button><button data-fcl="LOW">Low Idle</button><button data-fcl="HIGH">High Idle</button></div>
+      <div class="ped-emerg" id="emergSlot"></div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between">
+        <div style="min-width:200px;flex:1">
+          <div class="ptitle" style="margin-bottom:6px">OAT <span style="font-weight:400;text-transform:none;font-size:.8rem;opacity:.7">(condição, não é controle do avião)</span></div>
+          <div class="seg" id="oatseg"><button data-v="-10">Frio</button><button data-v="15">Padrão</button><button data-v="42">Quente</button></div>
+        </div>
+        <div class="btns" style="flex:1;min-width:240px"><button class="btn" id="reset">Reiniciar</button><button class="btn primary" id="analyze">Analisar acionamento</button></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Registro do acionamento</div>
+      <div class="log" id="log"></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="hint">Simulador didático — modelo aproximado do POH 208BPHCUS-04 (gates de partida fiéis; física entre eles é estimada). Som da buzina ativa após o primeiro toque. Não substitui o POH/AFM nem o simulador certificado.</div>
+    </div>
+  </section>
+</div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

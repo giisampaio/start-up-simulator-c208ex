@@ -1,0 +1,7 @@
+node_modules
+dist
+dist-single
+.git
+.gitignore
+*.md
+.vite
