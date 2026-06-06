@@ -70,8 +70,7 @@
 
     <div class="pedestal">
       <div class="ped-title">Pedestal</div>
-      <div style="font-family:'Saira Condensed';font-weight:600;text-transform:uppercase;font-size:.7rem;color:#cdd4dd;margin-bottom:5px">Fuel Condition Lever</div>
-      <div class="fcl" id="fcl"><button data-fcl="CUTOFF">Cutoff</button><button data-fcl="LOW">Low Idle</button><button data-fcl="HIGH">High Idle</button></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;color:#9fb0c4;margin-bottom:10px">Fuel Condition → manete fixa à direita ▸</div>
       <div class="ped-emerg" id="emergSlot"></div>
     </div>
   </div><!-- /colR -->
@@ -135,6 +134,19 @@
     </div>
 
     <button class="btn primary" id="initstart">Iniciar simulação</button>
+  </div>
+</div>
+
+<!-- MANETE FUEL CONDITION (fixa à direita, sempre visível) -->
+<div class="fclever" id="fclever">
+  <div class="fcl-title">Fuel<br>Cond</div>
+  <div class="fcl-track" id="fcl-track">
+    <div class="fcl-slot"></div>
+    <div class="fcl-gate"></div>
+    <div class="fcl-det fcl-det-high" data-fc="HIGH"><span>HIGH IDLE</span></div>
+    <div class="fcl-det fcl-det-low" data-fc="LOW"><span>LOW IDLE</span></div>
+    <div class="fcl-det fcl-det-cut" data-fc="CUTOFF"><span>CUTOFF</span></div>
+    <div class="fcl-handle" id="fcl-handle"></div>
   </div>
 </div>
 

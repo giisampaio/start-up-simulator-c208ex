@@ -26,7 +26,7 @@ function reset(){
     fuelNgAtIntro:null,oilAtIntro:null,boostAtIntro:null,emergAtStart:null,pwrAtStart:null,selsAtStart:null,ngAtStarterCut:null,idleITT:null,
     log:[],firedHot:false,firedIdle:false,finished:false})
   S.ITT=15;S.oilTemp=15;S.spike=15
-  renderSwitches();renderSelectors();renderEmerg();renderFcl();renderOat();renderGpu()
+  renderSwitches();renderSelectors();renderEmerg();renderFclever();renderOat();renderGpu()
   document.getElementById('verdict')!.className='verdict';document.getElementById('log')!.innerHTML=''
   logMsg('Pronto. Abra as seletoras (overhead), ligue a bateria e siga o fluxo.','')
 }
@@ -85,7 +85,30 @@ function renderEmerg(){document.getElementById('emergSlot')!.innerHTML=
   `<button data-emerg="FWD" style="flex:1;font-family:'Saira Condensed';font-weight:600;font-size:.78rem;padding:11px;border-radius:8px;border:1px solid #1b1f25;background:${S.emergPwr==='FWD'?'var(--red)':'#222a34'};color:${S.emergPwr==='FWD'?'#3a0c0a':'#aeb7c2'};cursor:pointer">À FRENTE</button></div>`}
 function renderSelectors(){document.getElementById('selectors')!.innerHTML=['L','R'].map(s=>{const on=S['sel'+s]==='ON';const side=s==='L'?'left':'right'
   return `<div class="fs"><div class="sel-dial ${side} ${on?'on':''}" data-sel="${s}"><span class="sel-lbl sel-off">OFF</span><span class="sel-lbl sel-on">ON·165</span><div class="lever"></div><div class="pivot"></div></div><div class="fs-name">${s==='L'?'Esquerda':'Direita'}</div></div>`}).join('')}
-function renderFcl(){document.querySelectorAll('#fcl button').forEach(b=>(b as HTMLElement).classList.toggle('active',(b as HTMLElement).dataset.fcl===S.fuelCondition))}
+const FC_POS:any={HIGH:7,LOW:45,CUTOFF:85}  // posição da manete (% do topo do trilho)
+function renderFclever(){const h=document.getElementById('fcl-handle');if(h)h.style.top=FC_POS[S.fuelCondition]+'%'
+  document.querySelectorAll('#fclever [data-fc]').forEach(el=>(el as HTMLElement).classList.toggle('act',(el as HTMLElement).dataset.fc===S.fuelCondition))}
+function setFuelCondition(v:string){
+  if(v==='LOW'||v==='HIGH'){
+    if(!S.lit&&S.fuelNgAtIntro===null){S.fuelNgAtIntro=S.Ng;S.oilAtIntro=S.oilPsi;S.boostAtIntro=S.fuelBoost;logMsg('FUEL CONDITION → '+(v==='LOW'?'LOW IDLE':'HIGH IDLE')+' — introduzindo combustível',S.Ng>=12?'':'e-bad')}
+    else logMsg('FUEL CONDITION → '+(v==='LOW'?'LOW IDLE':'HIGH IDLE'),'')
+    S.fuelCondition=v
+  } else {
+    logMsg('FUEL CONDITION → CUTOFF',S.lit?'e-warn':'');if(S.lit){S.lit=false;logMsg('Combustível cortado — motor desliga','e-warn')}S.fuelCondition='CUTOFF'
+  }
+  renderFclever()
+}
+// manete arrastável (com gate no CUTOFF)
+;(function setupFclever(){const track=document.getElementById('fcl-track'),handle=document.getElementById('fcl-handle');if(!track||!handle)return
+  const frac=(e:any)=>{const r=track.getBoundingClientRect();return Math.max(0.04,Math.min(0.93,(e.clientY-r.top)/r.height))}
+  const nearest=(f:number)=> f>0.70?'CUTOFF':(f<0.26?'HIGH':'LOW')  // gate: só vai a CUTOFF puxando bem pra baixo
+  let drag=false
+  handle.addEventListener('pointerdown',(e:any)=>{e.preventDefault();ensureAudio();drag=true;handle.classList.add('grabbing');try{handle.setPointerCapture(e.pointerId)}catch(_){}})
+  handle.addEventListener('pointermove',(e:any)=>{if(!drag)return;handle.style.top=(frac(e)*100)+'%'})
+  const end=(e:any)=>{if(!drag)return;drag=false;handle.classList.remove('grabbing');setFuelCondition(nearest(frac(e)))}
+  handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end)
+  document.querySelectorAll('#fclever [data-fc]').forEach(el=>el.addEventListener('click',()=>{ensureAudio();setFuelCondition((el as HTMLElement).dataset.fc!)}))
+})()
 function renderOat(){document.querySelectorAll('#oatseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',parseFloat((b as HTMLElement).dataset.v!)===S.oat))}
 
 function setSw(k:string,v:string){ensureAudio()
@@ -128,9 +151,7 @@ document.getElementById('selectors')!.addEventListener('click',e=>{const l=(e.ta
   const s=l.dataset.sel!;S['sel'+s]=S['sel'+s]==='ON'?'OFF':'ON';l.classList.toggle('on',S['sel'+s]==='ON');logMsg('Seletora '+(s==='L'?'esquerda':'direita')+' → '+S['sel'+s],S['sel'+s]==='ON'?'':'e-warn')})
 document.getElementById('emergSlot')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('[data-emerg]') as HTMLElement;if(!b)return;ensureAudio()
   S.emergPwr=b.dataset.emerg;logMsg('Emerg Power → '+(S.emergPwr==='NORMAL'?'NORMAL':'À FRENTE'),S.emergPwr==='NORMAL'?'':'e-bad');renderEmerg()})
-document.getElementById('fcl')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('[data-fcl]') as HTMLElement;if(!b)return;ensureAudio();const v=b.dataset.fcl!
-  if(v==='LOW'||v==='HIGH'){if(!S.lit&&S.fuelNgAtIntro===null){S.fuelNgAtIntro=S.Ng;S.oilAtIntro=S.oilPsi;S.boostAtIntro=S.fuelBoost;logMsg('FUEL CONDITION → '+(v==='LOW'?'LOW IDLE':'HIGH IDLE')+' — introduzindo combustível',S.Ng>=12?'':'e-bad')}else logMsg('FUEL CONDITION → '+(v==='LOW'?'LOW IDLE':'HIGH IDLE'),'');S.fuelCondition=v}
-  else{logMsg('FUEL CONDITION → CUTOFF',S.lit?'e-warn':'');if(S.lit){S.lit=false;logMsg('Combustível cortado — motor desliga','e-warn')}S.fuelCondition='CUTOFF'}renderFcl()})
+// (FUEL CONDITION agora é a manete fixa à direita — ver setupFclever / setFuelCondition)
 document.getElementById('oatseg')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;ensureAudio();S.oat=parseFloat(b.dataset.v!);if(!S.lit){S.ITT=S.oat;S.oilTemp=S.oat;S.spike=S.oat}renderOat()})
 function renderGpu(){document.querySelectorAll('#gpuseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',(((b as HTMLElement).dataset.gpu==='on')===S.gpuConnected)))}
 document.getElementById('gpuseg')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;ensureAudio();const on=b.dataset.gpu==='on';if(on!==S.gpuConnected){S.gpuConnected=on;logMsg('Fonte externa (GPU) '+(on?'CONECTADA (~27,5 V) — selecione EXT POWER em BUS/STARTER':'desconectada'),on?'e-good':'e-warn')}renderGpu()})
