@@ -85,8 +85,8 @@ function renderEmerg(){document.getElementById('emergSlot')!.innerHTML=
   `<button data-emerg="FWD" style="flex:1;font-family:'Saira Condensed';font-weight:600;font-size:.78rem;padding:11px;border-radius:8px;border:1px solid #1b1f25;background:${S.emergPwr==='FWD'?'var(--red)':'#222a34'};color:${S.emergPwr==='FWD'?'#3a0c0a':'#aeb7c2'};cursor:pointer">À FRENTE</button></div>`}
 function renderSelectors(){document.getElementById('selectors')!.innerHTML=['L','R'].map(s=>{const on=S['sel'+s]==='ON';const side=s==='L'?'left':'right'
   return `<div class="fs"><div class="sel-dial ${side} ${on?'on':''}" data-sel="${s}"><span class="sel-lbl sel-off">OFF</span><span class="sel-lbl sel-on">ON·165</span><div class="lever"></div><div class="pivot"></div></div><div class="fs-name">${s==='L'?'Esquerda':'Direita'}</div></div>`}).join('')}
-const FC_POS:any={HIGH:7,LOW:45,CUTOFF:85}  // posição da manete (% do topo do trilho)
-function renderFclever(){const h=document.getElementById('fcl-handle');if(h)h.style.top=FC_POS[S.fuelCondition]+'%'
+const FC_POS:any={HIGH:0,LOW:47,CUTOFF:100}  // offset-distance (%) ao longo do trilho com gate
+function renderFclever(){const h=document.getElementById('fcl-handle');if(h)h.style.setProperty('offset-distance',FC_POS[S.fuelCondition]+'%')
   document.querySelectorAll('#fclever [data-fc]').forEach(el=>(el as HTMLElement).classList.toggle('act',(el as HTMLElement).dataset.fc===S.fuelCondition))}
 function setFuelCondition(v:string){
   if(v==='LOW'||v==='HIGH'){
@@ -104,7 +104,7 @@ function setFuelCondition(v:string){
   const nearest=(f:number)=> f>0.70?'CUTOFF':(f<0.26?'HIGH':'LOW')  // gate: só vai a CUTOFF puxando bem pra baixo
   let drag=false
   handle.addEventListener('pointerdown',(e:any)=>{e.preventDefault();ensureAudio();drag=true;handle.classList.add('grabbing');try{handle.setPointerCapture(e.pointerId)}catch(_){}})
-  handle.addEventListener('pointermove',(e:any)=>{if(!drag)return;handle.style.top=(frac(e)*100)+'%'})
+  handle.addEventListener('pointermove',(e:any)=>{if(!drag)return;handle.style.setProperty('offset-distance',(frac(e)*100)+'%')})
   const end=(e:any)=>{if(!drag)return;drag=false;handle.classList.remove('grabbing');setFuelCondition(nearest(frac(e)))}
   handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end)
   document.querySelectorAll('#fclever [data-fc]').forEach(el=>el.addEventListener('click',()=>{ensureAudio();setFuelCondition((el as HTMLElement).dataset.fc!)}))
