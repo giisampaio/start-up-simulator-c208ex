@@ -28,6 +28,11 @@ function reset(){
   const tp=TEMPS[S.initTemp||'isa']||TEMPS.isa
   S.oat=tp.oat+Math.round((Math.random()-0.5)*4);S.elev=tp.elev
   S.ITT=S.oat;S.oilTemp=S.oat;S.spike=S.oat;S.phase=Math.random()*1000;S.osc=null
+  // Modo Treino de Panes: arma o conjunto escolhido e sorteia 1 para ocorrer
+  S.actLog=[];S.armedPanes=(S.initPanes&&S.initPanes.length)?S.initPanes.slice():[]
+  S.activePane=S.armedPanes.length?S.armedPanes[Math.floor(Math.random()*S.armedPanes.length)]:null
+  S.scenario=(S.activePane==='sensorFail')?'sensorFail':'normal'
+  S.paneOnset=null;S.fireActive=false;S.crankStartT=null;S.fireDelay=3+Math.random()*4;S.paneGuess=null
   renderSwitches();renderSelectors();renderEmerg();renderFclever();renderGpu();renderScnBadge()
   document.getElementById('verdict')!.className='verdict';document.getElementById('log')!.innerHTML=''
   logMsg('Pronto. Condição: '+tp.label+' (OAT '+S.oat+'°C'+(S.elev?', '+S.elev+' ft':'')+'). Abra as seletoras, ligue a bateria e siga o fluxo.','')
@@ -42,8 +47,21 @@ const BOOTLINES:[number,string][]=[[0.3,'AHRS ALIGN'],[0.9,'AIR DATA'],[1.5,'ENG
 function updBootLines(t:number){document.getElementById('eb-lines')!.innerHTML=BOOTLINES.filter(l=>t>=l[0]).map(l=>`<div><span>${l[1]}</span><span class="ok">OK</span></div>`).join('')}
 const idleNg=()=>S.fuelCondition==='HIGH'?71:62;const SELF=50;const AUTOCUT=46,SUSTAIN=45
 const TEMPS:any={frioext:{label:'Frio extremo',oat:-25,elev:0},frio:{label:'Frio',oat:-10,elev:0},isa:{label:'Padrão (ISA)',oat:15,elev:0},quente:{label:'Quente',oat:30,elev:0},mquente:{label:'Muito quente',oat:43,elev:0},elev:{label:'Quente + elevação',oat:35,elev:5000}}
+// Catálogo de panes (Modo Treino) — ver docs/panes-caravan-ex.md
+const PANES:any={
+  hotStart:{label:'Partida quente',correct:['CUTOFF'],limit:5,how:'A ITT subiu rápido rumo a 1090 °C após o combustível.',act:'FUEL CONDITION → CUTOFF imediato.'},
+  noLight:{label:'Sem light-off',correct:['CUTOFF'],limit:15,how:'Não houve subida de ITT após introduzir o combustível.',act:'CUTOFF + Engine Clearing (STARTER → MOTOR).'},
+  hungStart:{label:'Partida pendurada (hung)',correct:['CUTOFF'],limit:9,how:'O Ng estagnou abaixo do idle e a ITT subiu.',act:'FUEL CONDITION → CUTOFF.'},
+  fire:{label:'Fogo na partida',correct:['CUTOFF','BOOST_OFF','STARTER_MOTOR'],limit:7,how:'ENGINE FIRE + buzina durante a partida.',act:'CUTOFF · FUEL BOOST OFF · STARTER → MOTOR.'},
+  sensorFail:{label:'Sensor de velocidade falho',correct:['CUTOFF'],limit:14,how:'STARTER ON não apagou e o gerador não conectou.',act:'Engine shutdown (FUEL CONDITION → CUTOFF).'},
+  weakBattery:{label:'Bateria fraca',correct:['CUTOFF'],limit:12,how:'O Ng acelerou devagar no cranking.',act:'CUTOFF; recarregar ou usar GPU.'},
+  gearDecouple:{label:'Decouple do gear train',correct:['STARTER_OFF','CUTOFF'],limit:6,how:'O Ng acelerou muito rápido acima de 20%.',act:'Não continuar a partida (STARTER OFF / CUTOFF).'},
+}
+const PANE_IDS=['hotStart','noLight','hungStart','fire','sensorFail','weakBattery','gearDecouple']
+const ACT_LABEL:any={CUTOFF:'FUEL CONDITION → CUTOFF',BOOST_OFF:'FUEL BOOST → OFF',STARTER_MOTOR:'STARTER → MOTOR',STARTER_OFF:'STARTER → OFF',EXT_OFF:'EXTERNAL POWER → OFF',EMERG_NORMAL:'EMERG POWER → NORMAL'}
 function logMsg(m:string,c:string){const s=S.t>0?` <span class="snap">[Ng ${S.Ng.toFixed(0)}% · ITT ${S.ITT.toFixed(0)}° · óleo ${S.oilPsi.toFixed(0)}]</span>`:''
   S.log.unshift(`<div><span class="t">${S.t.toFixed(1)}s</span> <span class="${c}">${m}</span>${s}</div>`);document.getElementById('log')!.innerHTML=S.log.join('')}
+function rec(type:string){if(S.actLog)S.actLog.push({t:S.t,type})}
 
 /* ---------- redlines dinâmicas (fidelidade EX) ---------- */
 // Torque: com AVIONICS 2 OFF a redline trava em 2397 (POH). Com AV2 ON ela é
@@ -99,7 +117,7 @@ function setFuelCondition(v:string){
     else logMsg('FUEL CONDITION → '+(v==='LOW'?'LOW IDLE':'HIGH IDLE'),'')
     S.fuelCondition=v
   } else {
-    logMsg('FUEL CONDITION → CUTOFF',S.lit?'e-warn':'');if(S.lit){S.lit=false;logMsg('Combustível cortado — motor desliga','e-warn')}S.fuelCondition='CUTOFF'
+    rec('CUTOFF');logMsg('FUEL CONDITION → CUTOFF',S.lit?'e-warn':'');if(S.lit){S.lit=false;logMsg('Combustível cortado — motor desliga','e-warn')}S.fuelCondition='CUTOFF'
   }
   renderFclever()
 }
@@ -116,19 +134,20 @@ function setFuelCondition(v:string){
   document.querySelectorAll('#fclever [data-fc]').forEach(el=>el.addEventListener('click',()=>{ensureAudio();setFuelCondition((el as HTMLElement).dataset.fc!)}))
 })()
 function renderScnBadge(){const el=document.getElementById('scnbadge');if(!el)return
-  if(S.scenario&&S.scenario!=='normal'){el.textContent='⚠ AVARIA ARMADA: sensor de velocidade do starter falho';el.classList.add('on')}
+  const n=(S.armedPanes&&S.armedPanes.length)||0
+  if(n>0){el.textContent='⚠ MODO TREINO DE PANES — '+n+' pane(s) armada(s)';el.classList.add('on')}
   else el.classList.remove('on')}
 
 function setSw(k:string,v:string){ensureAudio()
   if(k==='battery'){const on=v==='on';if(on!==S.battery){S.battery=on;logMsg('Bateria '+(on?'ON':'OFF'),'')}renderSwitches();return}
   if(k==='starter'){const mode=v==='on'?'START':(v==='motor'?'MOTOR':'OFF')
     if(mode==='OFF'){
-      if(S.starter){S.starter=false;S.starterMode='OFF';S.ngAtStarterCut=S.Ng;logMsg('STARTER → OFF (Ng '+S.Ng.toFixed(0)+'%)',S.Ng>=55?'e-good':(S.lit?'e-warn':''))
+      if(S.starter){rec('STARTER_OFF');S.starter=false;S.starterMode='OFF';S.ngAtStarterCut=S.Ng;logMsg('STARTER → OFF (Ng '+S.Ng.toFixed(0)+'%)',S.Ng>=55?'e-good':(S.lit?'e-warn':''))
         if(S.sensorStuck)logMsg('STARTER ON permanece — start contactor preso (sensor falho); o gerador não funciona. Faça engine shutdown.','e-bad')
         else if(S.lit&&S.Ng<SUSTAIN)logMsg('Starter cortado antes do auto-sustento — risco de hung/hot start','e-bad')
         else if(S.lit&&S.Ng<55)logMsg('Starter desligado abaixo de 55% Ng (cedo)','e-warn')}
     } else {
-      const wasOff=!S.starter;S.starter=true;S.starterMode=mode;if(wasOff)S.starterTimer=0
+      const wasOff=!S.starter;S.starter=true;S.starterMode=mode;if(mode==='MOTOR')rec('STARTER_MOTOR');if(wasOff)S.starterTimer=0
       if(mode==='START'){S.pwrAtStart=pwr();S.emergAtStart=S.emergPwr;S.selsAtStart=(S.selL==='ON'&&S.selR==='ON')}
       const canCrank=S.battery||S.extPwr==='STARTER'
       logMsg('STARTER → '+mode+(mode==='MOTOR'?' (dry motoring — sem ignição)':''),(pwr()&&canCrank)?'':'e-bad')
@@ -138,8 +157,8 @@ function setSw(k:string,v:string){ensureAudio()
     }
     renderSwitches();return}
   S[k]=v
-  if(k==='fuelBoost')logMsg('Fuel Boost → '+v,v==='OFF'?'e-warn':'')
-  else if(k==='extPwr'){logMsg('External Power → '+v,(v!=='OFF'&&!S.gpuConnected)?'e-warn':'');if(v!=='OFF'&&!S.gpuConnected)logMsg('Nenhuma fonte externa conectada — conecte a GPU para ter efeito.','e-warn')}
+  if(k==='fuelBoost'){if(v==='OFF')rec('BOOST_OFF');logMsg('Fuel Boost → '+v,v==='OFF'?'e-warn':'')}
+  else if(k==='extPwr'){if(v==='OFF')rec('EXT_OFF');logMsg('External Power → '+v,(v!=='OFF'&&!S.gpuConnected)?'e-warn':'');if(v!=='OFF'&&!S.gpuConnected)logMsg('Nenhuma fonte externa conectada — conecte a GPU para ter efeito.','e-warn')}
   else if(k==='ignition')logMsg('Ignition → '+v,'')
   else if(k==='generator'){if(v==='TRIP'){S.genTripped=true;logMsg('Generator TRIP — gerador desconectado','e-warn')}else if(v==='RESET'){S.genTripped=false;logMsg('Generator RESET — gerador rearmado','e-good')}}
   else if(k==='stbyAlt')logMsg('Stby Alt Pwr → '+v,'')
@@ -160,7 +179,7 @@ document.addEventListener('pointerup',releaseHeld);document.addEventListener('po
 document.getElementById('selectors')!.addEventListener('click',e=>{const l=(e.target as HTMLElement).closest('[data-sel]') as HTMLElement;if(!l)return;ensureAudio()
   const s=l.dataset.sel!;S['sel'+s]=S['sel'+s]==='ON'?'OFF':'ON';l.classList.toggle('on',S['sel'+s]==='ON');logMsg('Seletora '+(s==='L'?'esquerda':'direita')+' → '+S['sel'+s],S['sel'+s]==='ON'?'':'e-warn')})
 document.getElementById('emergSlot')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('[data-emerg]') as HTMLElement;if(!b)return;ensureAudio()
-  S.emergPwr=b.dataset.emerg;logMsg('Emerg Power → '+(S.emergPwr==='NORMAL'?'NORMAL':'À FRENTE'),S.emergPwr==='NORMAL'?'':'e-bad');renderEmerg()})
+  S.emergPwr=b.dataset.emerg;if(S.emergPwr==='NORMAL')rec('EMERG_NORMAL');logMsg('Emerg Power → '+(S.emergPwr==='NORMAL'?'NORMAL':'À FRENTE'),S.emergPwr==='NORMAL'?'':'e-bad');renderEmerg()})
 // (FUEL CONDITION agora é a manete fixa à direita — ver setupFclever / setFuelCondition)
 // (OAT agora é definido pela 'Temperatura / Condição' na tela inicial)
 function renderGpu(){document.querySelectorAll('#gpuseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',(((b as HTMLElement).dataset.gpu==='on')===S.gpuConnected)))}
@@ -212,7 +231,7 @@ function updExtras(){document.getElementById('d-np')!.textContent=(S.Np+((S.osc&
 
 /* ---------- CAS ---------- */
 function casActive():[string,boolean,string][]{const P=pwr();const ignOn=P&&((S.starter&&S.starterMode==='START')||S.ignition==='ON');const feeding=S.selL==='ON'||S.selR==='ON'
-  return[['FUEL SELECT OFF',selWarn(),'r'],['RSVR FUEL LOW',P&&!feeding&&S.rsvrSecs<25,'r'],['OIL PRESS LOW',P&&S.lit&&S.oilPsi<40,'r'],
+  return[['ENGINE FIRE',S.fireActive,'r'],['FUEL SELECT OFF',selWarn(),'r'],['RSVR FUEL LOW',P&&!feeding&&S.rsvrSecs<25,'r'],['OIL PRESS LOW',P&&S.lit&&S.oilPsi<40,'r'],
     ['EMERG PWR LVR',P&&S.emergPwr!=='NORMAL','r'],['VOLTS LOW',P&&S.busVolts>0&&S.busVolts<23,'r'],
     ['GENERATOR OFF',P&&(!(S.lit&&S.Ng>50&&!S.starter&&!S.sensorStuck)||S.genTripped),'a'],['STARTER ON',(S.starter&&!S.starterCutBySensor)||S.sensorStuck,'a'],
     ['FUEL PRESS LOW',P&&S.fuelBoost==='OFF'&&S.fuelCondition!=='CUTOFF','a'],['FUEL BOOST ON',S.fuelBoost==='ON','a'],
@@ -232,14 +251,16 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   const fuelAvail=S.fuelBoost!=='OFF'&&S.rsvrSecs>0
   // starter realmente motorizando (energizado): switch START/MOTOR, sem corte do sensor, com energia
   const cranking=S.starter&&!S.starterCutBySensor&&P&&canCrankNow()&&(S.starterMode!=='MOTOR'||S.ignition==='NORM')
+  if(cranking&&S.crankStartT==null)S.crankStartT=S.t
+  if(!S.fireActive&&S.activePane==='fire'&&S.crankStartT!=null&&(S.t-S.crankStartT)>S.fireDelay){S.fireActive=true;if(S.paneOnset==null)S.paneOnset=S.t;logMsg('⚠ ENGINE FIRE durante a partida!','e-bad')}
   // ciclo do starter conta enquanto o motor está energizado (até o auto-corte ou OFF)
   if(cranking){S.starterTimer+=dt;S.starterMax=Math.max(S.starterMax,S.starterTimer);if(S.starterTimer>30&&!S.starterCycleExceed){S.starterCycleExceed=true;logMsg('Ciclo do starter excedeu 30 s — respeite o resfriamento!','e-bad')}}
-  if(!S.lit&&(S.fuelCondition==='LOW'||S.fuelCondition==='HIGH')&&ignOn&&fuelAvail&&P){S.lit=true;S.lightT=0
+  if(!S.lit&&(S.fuelCondition==='LOW'||S.fuelCondition==='HIGH')&&ignOn&&fuelAvail&&P&&S.activePane!=='noLight'){S.lit=true;S.lightT=0
     logMsg('Light-off — combustível inflamou; observe o pico de ITT',S.Ng<10?'e-warn':'e-good')}
   if(S.lit)S.lightT+=dt
   // auto-corte do starter pelo sensor de velocidade a 46% Ng (ou falha do sensor)
   if(S.starter&&S.starterMode==='START'&&S.Ng>=AUTOCUT&&!S.starterCutBySensor&&!S.sensorStuck){
-    if(S.scenario==='sensorFail'){S.sensorStuck=true;S.firedSensorFail=true;logMsg('⚠ Sensor de velocidade NÃO desacoplou o starter a 46% Ng — STARTER ON deveria apagar','e-bad')}
+    if(S.scenario==='sensorFail'){S.sensorStuck=true;S.firedSensorFail=true;if(S.paneOnset==null)S.paneOnset=S.t;logMsg('⚠ Sensor de velocidade NÃO desacoplou o starter a 46% Ng — STARTER ON deveria apagar','e-bad')}
     else{S.starterCutBySensor=true;logMsg('Starter desacoplado pelo sensor a 46% Ng (modo gerador ao desligar)','e-good')}
   }
   // --- Ng: spool com tempo realista (~25-35 s); fase de "light" segura o Ng p/ a ITT dar o pico ---
@@ -248,9 +269,12 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
     if(cranking&&S.lightT<2.0&&S.Ng<40){tNg=Math.max(S.Ng,12);r=0.25}        // fase de "light"
     else if(cranking||S.Ng>=SUSTAIN){tNg=idleNg()+(cranking?2:0);r=0.12}      // acelera ao idle (lento, ~real)
     else{tNg=0;r=0.35}                                                        // sem assist abaixo do auto-sustento => hung
+    if(S.activePane==='hungStart')tNg=Math.min(tNg,38)                        // PANE: pendurada (Ng não passa de ~38%)
   }else{
     const gpuStartC=S.gpuConnected&&S.extPwr==='STARTER'
     tNg=cranking?(gpuStartC?24:22):0;r=cranking?(gpuStartC?0.30:0.22):0.5      // motoring lento (~real)
+    if(cranking&&S.activePane==='weakBattery'){tNg=14;r=0.10}                  // PANE: bateria fraca (acelera devagar)
+    if(cranking&&S.activePane==='gearDecouple'){tNg=72;r=0.95}                 // PANE: gear decouple (dispara rápido)
   }
   S.Ng+=(tNg-S.Ng)*r*dt;if(S.Ng<0)S.Ng=0
   // --- Fuel flow (PPH) --- EMERG fora do NORMAL despeja excesso de combustível
@@ -260,10 +284,17 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   // --- ITT (física) --- temperatura de equilíbrio = idle + "bump" (combustível/ar): muito
   // combustível com pouco ar (Ng baixo) => pico; atraso térmico faz a ITT subir/descer suave.
   const ittIdle=(S.fuelCondition==='HIGH'?665:625)+Math.max(0,(S.oat-15))*2.5+(S.elev||0)/1000*8
-  const bump=S.lit?3.3*S.fflow*Math.max(0,(SELF-S.Ng))/SELF:0
+  let bump=S.lit?3.3*S.fflow*Math.max(0,(SELF-S.Ng))/SELF:0
+  if(S.lit&&S.activePane==='hotStart')bump*=2.1                               // PANE: partida quente (pico estoura)
   const ittEq=S.lit?(ittIdle+bump):S.oat
   S.ITT+=(ittEq-S.ITT)*(S.lit?2.0:1.0)*dt
   S.peakITT=Math.max(S.peakITT,S.ITT);if(S.ITT>1090&&!S.firedHot){S.firedHot=true;S.hotStart=true;logMsg('⚠ HOT START — ITT > 1090°C! Leve FUEL CONDITION a CUTOFF','e-bad')}
+  if(S.activePane&&S.paneOnset==null){const p=S.activePane
+    if(p==='hotStart'&&S.lit&&S.ITT>850)S.paneOnset=S.t
+    else if(p==='hungStart'&&S.lit&&S.lightT>3&&S.Ng<45)S.paneOnset=S.t
+    else if(p==='noLight'&&S.fuelNgAtIntro!=null)S.paneOnset=S.t
+    else if(p==='weakBattery'&&cranking&&S.crankStartT!=null&&(S.t-S.crankStartT)>5&&S.Ng<12)S.paneOnset=S.t
+    else if(p==='gearDecouple'&&!S.lit&&S.Ng>20)S.paneOnset=S.t}
   S.oilPsi+=((S.Ng<3?0:Math.min(S.lit?95:140,S.Ng*1.55))-S.oilPsi)*(S.oat<0?0.6:1.1)*dt
   S.oilTemp+=(((S.lit?42:S.oat))-S.oilTemp)*0.05*dt
   S.Np+=(((S.lit&&S.Ng>50)?600+(S.Ng-50)*16:(S.lit&&S.Ng>45?(S.Ng-45)*40:0))-S.Np)*0.7*dt
@@ -283,7 +314,7 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   if(S.lit&&S.Ng>55&&!cranking){const tt=S.t+(S.phase||0)
     S.osc={torque:10*Math.sin(tt*1.0+0.5)+5*Math.sin(tt*2.4+2.0),ITT:1.3*Math.sin(tt*0.7+0.3)+0.6*Math.sin(tt*1.9),Ng:0.13*Math.sin(tt*0.8)+0.06*Math.sin(tt*2.1+1.5),Np:3.5*Math.sin(tt*1.3)+2*Math.sin(tt*2.9+1.1),fflow:1.3*Math.sin(tt*0.9+1.2)}}
   else S.osc=null
-  if(hornGain){const beat=Math.floor(S.t*3)%2;hornGain.gain.value=selWarn()?(beat?0.05:0):0}
+  if(hornGain){const beat=Math.floor(S.t*3)%2;hornGain.gain.value=(selWarn()||S.fireActive)?(beat?0.06:0):0}
   updRounds();updHB();updExtras();drawCAS()
   const eisP=pwr()&&S.av1==='ON';const eis=document.getElementById('eis')!
   if(!eisP){S.eisState='off';S.bootT=0}
@@ -293,7 +324,8 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   requestAnimationFrame(tick)}
 
 /* ---------- análise (verdict) ---------- */
-function analyze(){const c:[string,boolean,string][]=[
+function analyze(){if(S.armedPanes&&S.armedPanes.length){openPaneQuiz();return}
+  const c:[string,boolean,string][]=[
   ['Energia (bateria/ext) disponível na partida',S.pwrAtStart===true,'O starter precisa de energia elétrica.'],
   ['Seletoras L e R em ON antes da partida',S.selsAtStart===true,'Na partida, qualquer seletora OFF dispara FUEL SELECT OFF + buzina.'],
   ['EMERG POWER em NORMAL na partida',(S.emergAtStart||S.emergPwr)==='NORMAL','Fora do NORMAL causa over-temperature.'],
@@ -310,11 +342,43 @@ function analyze(){const c:[string,boolean,string][]=[
   const fails=c.filter(x=>!x[1]).length;const v=document.getElementById('verdict')!;v.className='verdict show '+(fails===0?'good':'bad')
   v.innerHTML=`<h3>${fails===0?'✓ Bom acionamento':'✗ '+fails+' problema'+(fails>1?'s':'')}</h3>`+c.map(x=>`<div class="check ${x[1]?'ok':'no'}"><span class="mk">${x[1]?'✓':'✗'}</span><span>${x[0]}${x[1]?'':' — <b>'+x[2]+'</b>'}</span></div>`).join('')
   S.finished=true;v.scrollIntoView({behavior:'smooth',block:'nearest'})}
+
+/* ---------- debrief do Modo Treino de Panes ---------- */
+function openPaneQuiz(){const v=document.getElementById('verdict')!;v.className='verdict show bad'
+  const opts=(S.armedPanes||[]).map((id:string)=>`<button class="quizbtn" data-guess="${id}">${PANES[id].label}</button>`).join('')+`<button class="quizbtn" data-guess="none">Nenhuma pane</button>`
+  v.innerHTML=`<h3>Debrief — identifique a pane</h3><p style="font-size:.85rem;margin-bottom:6px">Qual pane ocorreu neste acionamento?</p><div class="quizopts">${opts}</div>`
+  v.querySelectorAll('.quizbtn').forEach(b=>b.addEventListener('click',()=>computeDebrief((b as HTMLElement).dataset.guess!)))
+  v.scrollIntoView({behavior:'smooth',block:'nearest'})}
+function computeDebrief(guess:string){
+  const active=S.activePane;const p=active?PANES[active]:null;const onset=S.paneOnset
+  const correctId=active?guess===active:guess==='none'
+  const acts=(S.actLog||[]).filter((a:any)=>onset==null||a.t>=onset-0.3)
+  let idTime:any=null
+  if(p&&onset!=null){const fc=acts.find((a:any)=>p.correct.indexOf(a.type)>=0);if(fc)idTime=fc.t-onset}
+  let actOk=false,actNote=''
+  if(p){const did=(t:string)=>acts.some((a:any)=>a.type===t);const allReq=p.correct.every(did);const inTime=idTime!=null&&idTime<=p.limit
+    if(active==='fire'){actOk=allReq&&inTime;actNote=allReq?'sequência completa':'faltou '+p.correct.filter((t:string)=>!did(t)).map((t:string)=>ACT_LABEL[t]).join(', ')}
+    else{actOk=inTime;actNote=idTime==null?'ação corretiva não detectada':(inTime?'dentro do tempo':'fora do tempo (limite ~'+p.limit+'s)')}}
+  else{actOk=!S.hotStart&&!S.fireActive;actNote='partida sem avaria'}
+  let score=(correctId?40:0)+(actOk?40:0)
+  if(idTime!=null)score+=Math.round(20*Math.max(0,Math.min(1,1-idTime/(p?p.limit:10))))
+  else if(!active&&correctId)score+=20
+  const actStr=acts.map((a:any)=>ACT_LABEL[a.type]?ACT_LABEL[a.type]+' @ '+a.t.toFixed(0)+'s':'').filter(Boolean).join(' · ')||'nenhuma ação corretiva registrada'
+  const good=correctId&&actOk
+  const v=document.getElementById('verdict')!;v.className='verdict show '+(good?'good':'bad')
+  const guessLbl=guess==='none'?'Nenhuma pane':(PANES[guess]?PANES[guess].label:guess)
+  const actualLbl=active?PANES[active].label:'Nenhuma pane (partida normal)'
+  let html=`<h3>${good?'✓':'✗'} Debrief — nota ${score}/100</h3>`
+  html+=`<div class="check ${correctId?'ok':'no'}"><span class="mk">${correctId?'✓':'✗'}</span><span>Identificação: respondeu <b>${guessLbl}</b> — ${correctId?'correto':'incorreto'}. Pane real: <b>${actualLbl}</b>.</span></div>`
+  if(p){html+=`<div class="check ${actOk?'ok':'no'}"><span class="mk">${actOk?'✓':'✗'}</span><span>Ação esperada: <b>${p.act}</b> — ${actNote}.</span></div>`
+    html+=`<div class="check ${(idTime!=null&&idTime<=p.limit)?'ok':'no'}"><span class="mk">${idTime!=null?'•':'✗'}</span><span>Tempo até a ação corretiva: <b>${idTime!=null?idTime.toFixed(1)+'s':'—'}</b> (referência ~${p.limit}s).</span></div>`}
+  html+=`<div class="hint">O que houve: ${active?p.how:'partida normal, sem avaria.'}<br>Ações detectadas: ${actStr}.</div>`
+  v.innerHTML=html;v.scrollIntoView({behavior:'smooth',block:'nearest'})}
 document.getElementById('analyze')!.addEventListener('click',analyze)
 document.getElementById('reset')!.addEventListener('click',openInit)
 
 // ---- Tela de inicialização (combustível + fonte externa) ----
-let initGpuSel=false,initScnSel='normal',initTempSel='isa'
+let initGpuSel=false,initTempSel='isa';let initPanesSel:string[]=[]
 function updInitLabels(){const l=+(document.getElementById('ir-l') as HTMLInputElement).value;const r=+(document.getElementById('ir-r') as HTMLInputElement).value
   document.getElementById('il-l')!.textContent=String(l);document.getElementById('il-r')!.textContent=String(r)
   document.getElementById('il-total')!.textContent=String(l+r);document.getElementById('il-gal')!.textContent=String(Math.round((l+r)/6.7))}
@@ -323,21 +387,21 @@ function syncInit(){initGpuSel=S.initGpu??false
   ;(document.getElementById('ir-r') as HTMLInputElement).value=String(S.initFuelR??1110)
   updInitLabels()
   document.querySelectorAll('#initgpu button').forEach(b=>(b as HTMLElement).classList.toggle('active',((b as HTMLElement).dataset.gpu==='on')===initGpuSel))
-  initScnSel=S.initScenario??'normal'
-  document.querySelectorAll('#initscn button').forEach(b=>(b as HTMLElement).classList.toggle('active',(b as HTMLElement).dataset.scn===initScnSel))
+  initPanesSel=(S.initPanes&&S.initPanes.slice())||[]
+  document.querySelectorAll('#initpanes button').forEach(b=>(b as HTMLElement).classList.toggle('active',initPanesSel.indexOf((b as HTMLElement).dataset.pane!)>=0))
   initTempSel=S.initTemp??'isa'
   document.querySelectorAll('#inittemp button').forEach(b=>(b as HTMLElement).classList.toggle('active',(b as HTMLElement).dataset.temp===initTempSel))}
 function openInit(){syncInit();document.getElementById('initov')!.classList.remove('hidden')}
 ;['ir-l','ir-r'].forEach(id=>document.getElementById(id)!.addEventListener('input',updInitLabels))
 document.getElementById('fuelpreset')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;const v=b.dataset.fuel!;(document.getElementById('ir-l') as HTMLInputElement).value=v;(document.getElementById('ir-r') as HTMLInputElement).value=v;updInitLabels()})
 document.getElementById('initgpu')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initGpuSel=b.dataset.gpu==='on';document.querySelectorAll('#initgpu button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
-document.getElementById('initscn')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initScnSel=b.dataset.scn!;document.querySelectorAll('#initscn button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
+document.getElementById('initpanes')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;const id=b.dataset.pane!;const i=initPanesSel.indexOf(id);if(i>=0)initPanesSel.splice(i,1);else initPanesSel.push(id);b.classList.toggle('active')})
 document.getElementById('inittemp')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initTempSel=b.dataset.temp!;document.querySelectorAll('#inittemp button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
 document.getElementById('initstart')!.addEventListener('click',()=>{ensureAudio()
   S.initFuelL=+(document.getElementById('ir-l') as HTMLInputElement).value
   S.initFuelR=+(document.getElementById('ir-r') as HTMLInputElement).value
   S.initGpu=initGpuSel
-  S.initScenario=initScnSel
+  S.initPanes=initPanesSel.slice()
   S.initTemp=initTempSel
   reset()
   document.getElementById('initov')!.classList.add('hidden')})

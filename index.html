@@ -142,11 +142,17 @@
     </div>
 
     <div class="init-sec">
-      <div class="init-lbl">Cenário / Avaria</div>
-      <div class="seg" id="initscn">
-        <button data-scn="normal">Normal</button>
-        <button data-scn="sensorFail">Sensor de velocidade falho</button>
+      <div class="init-lbl">Treino de Panes (opcional)</div>
+      <div class="seg" id="initpanes">
+        <button data-pane="hotStart">Partida quente</button>
+        <button data-pane="noLight">Sem light-off</button>
+        <button data-pane="hungStart">Pendurada</button>
+        <button data-pane="fire">Fogo</button>
+        <button data-pane="sensorFail">Sensor velocidade</button>
+        <button data-pane="weakBattery">Bateria fraca</button>
+        <button data-pane="gearDecouple">Gear decouple</button>
       </div>
+      <div style="font-size:.7rem;color:var(--muted);margin-top:6px">Marque as panes que podem ocorrer — o sim sorteia 1. Vazio = partida normal.</div>
     </div>
 
     <button class="btn primary" id="initstart">Iniciar simulação</button>
