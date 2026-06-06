@@ -11,7 +11,7 @@ body{
   background-attachment:fixed;color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased;
   /* faixa da manete reservada só no desktop (ver @media min-width:900px) */
 }
-.app{max-width:1120px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1.9fr 1fr;column-gap:10px;row-gap:12px;align-items:start;}
+.app{max-width:1120px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 78px;column-gap:10px;row-gap:12px;align-items:start;}
 /* mobile: cockpit em grade — EIS e overhead em largura total; switches | pedestal lado a lado */
 .colL,.colR,.bottom{display:contents;}
 header{grid-column:1/-1;grid-row:1;margin-bottom:0;}
@@ -237,14 +237,15 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
 }
 /* mobile: switches compactos (cabem 4 por linha ao lado do pedestal) */
 @media(max-width:899px){
-  .swcard{padding:10px 6px;}
-  .swrow{gap:3px;margin-bottom:13px;justify-content:space-between;}
-  .switch{width:50px;}
-  .sw-track{width:28px;}
-  .sw-knob{width:22px;}
-  .sw-labels{left:31px;}
-  .sw-labels span{font-size:.5rem;}
-  .sw-name{font-size:.55rem;line-height:1.05;}
-  .pedestal{display:flex;flex-direction:column;align-items:center;}
+  .swcard{padding:10px 7px;}
+  .swrow{gap:4px;margin-bottom:14px;justify-content:space-between;}
+  .switch{width:56px;}
+  .sw-track{width:30px;}
+  .sw-knob{width:24px;}
+  .sw-labels{left:34px;}
+  .sw-labels span{font-size:.53rem;}
+  .sw-name{font-size:.58rem;line-height:1.05;}
+  .pedestal{display:flex;flex-direction:column;align-items:center;padding:10px 6px;}
   .pedestal .ped-title{align-self:flex-start;}
+  .fclever{width:54px;padding:8px 4px;}
 }
