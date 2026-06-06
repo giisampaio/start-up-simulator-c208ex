@@ -20,14 +20,14 @@ function reset(){
     starter:false,starterMode:'OFF',avStby:'OFF',avBusTie:'OFF',av1:'OFF',av2:'OFF',emergPwr:'NORMAL',fuelCondition:'CUTOFF',
     selL:'OFF',selR:'OFF',oat:15,
     Ng:0,ITT:15,Np:0,torque:0,oilPsi:0,oilTemp:15,fflow:0,batAmps:0,busVolts:0,fuelL:(S.initFuelL??1110),fuelR:(S.initFuelR??1110),
-    spike:15,lightT:0,lit:false,peakITT:0,hotStart:false,idleReached:false,idleStable:0,rsvrSecs:45,firedStarve:false,firedRsvr:false,
+    lightT:0,lit:false,peakITT:0,hotStart:false,idleReached:false,idleStable:0,rsvrSecs:45,firedStarve:false,firedRsvr:false,
     eisState:'off',bootT:0,genTripped:false,
     starterTimer:0,starterMax:0,starterCycleExceed:false,starterCutBySensor:false,sensorStuck:false,scenario:(S.initScenario??'normal'),firedSensorFail:false,
     fuelNgAtIntro:null,oilAtIntro:null,boostAtIntro:null,emergAtStart:null,pwrAtStart:null,selsAtStart:null,ngAtStarterCut:null,idleITT:null,
     log:[],firedHot:false,firedIdle:false,finished:false})
   const tp=TEMPS[S.initTemp||'isa']||TEMPS.isa
   S.oat=tp.oat+Math.round((Math.random()-0.5)*4);S.elev=tp.elev
-  S.ITT=S.oat;S.oilTemp=S.oat;S.spike=S.oat;S.phase=Math.random()*1000;S.osc=null
+  S.ITT=S.oat;S.oilTemp=S.oat;S.phase=Math.random()*1000;S.osc=null
   // Modo Treino de Panes: arma o conjunto escolhido e sorteia 1 para ocorrer
   S.actLog=[];S.armedPanes=(S.initPanes&&S.initPanes.length)?S.initPanes.slice():[]
   S.activePane=S.armedPanes.length?S.armedPanes[Math.floor(Math.random()*S.armedPanes.length)]:null
