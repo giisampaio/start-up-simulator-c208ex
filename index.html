@@ -79,10 +79,6 @@
   <div class="bottom">
     <div class="panel configcard">
       <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between">
-        <div style="min-width:200px;flex:1">
-          <div class="ptitle" style="margin-bottom:6px">OAT <span style="font-weight:400;text-transform:none;font-size:.8rem;opacity:.7">(condição, não é controle do avião)</span></div>
-          <div class="seg" id="oatseg"><button data-v="-10">Frio</button><button data-v="15">Padrão</button><button data-v="42">Quente</button></div>
-        </div>
         <div style="min-width:190px;flex:1">
           <div class="ptitle" style="margin-bottom:6px">Fonte Externa — GPU <span style="font-weight:400;text-transform:none;font-size:.8rem;opacity:.7">(~27,5 V · use o switch EXT POWER)</span></div>
           <div class="seg" id="gpuseg"><button data-gpu="off">Desconectada</button><button data-gpu="on">Conectada</button></div>
@@ -123,6 +119,18 @@
         <input type="range" id="ir-r" min="0" max="1110" step="10" value="1110">
       </div>
       <div class="init-total">Total: <b id="il-total">2220</b> lb · <b id="il-gal">331</b> gal</div>
+    </div>
+
+    <div class="init-sec">
+      <div class="init-lbl">Temperatura / Condição</div>
+      <div class="seg" id="inittemp">
+        <button data-temp="frioext">Frio extremo</button>
+        <button data-temp="frio">Frio</button>
+        <button data-temp="isa">Padrão</button>
+        <button data-temp="quente">Quente</button>
+        <button data-temp="mquente">Muito quente</button>
+        <button data-temp="elev">Quente+elev</button>
+      </div>
     </div>
 
     <div class="init-sec">

@@ -25,11 +25,14 @@ function reset(){
     starterTimer:0,starterMax:0,starterCycleExceed:false,starterCutBySensor:false,sensorStuck:false,scenario:(S.initScenario??'normal'),firedSensorFail:false,
     fuelNgAtIntro:null,oilAtIntro:null,boostAtIntro:null,emergAtStart:null,pwrAtStart:null,selsAtStart:null,ngAtStarterCut:null,idleITT:null,
     log:[],firedHot:false,firedIdle:false,finished:false})
-  S.ITT=15;S.oilTemp=15;S.spike=15
-  renderSwitches();renderSelectors();renderEmerg();renderFclever();renderOat();renderGpu();renderScnBadge()
+  const tp=TEMPS[S.initTemp||'isa']||TEMPS.isa
+  S.oat=tp.oat+Math.round((Math.random()-0.5)*4);S.elev=tp.elev
+  S.ITT=S.oat;S.oilTemp=S.oat;S.spike=S.oat;S.phase=Math.random()*1000;S.osc=null
+  renderSwitches();renderSelectors();renderEmerg();renderFclever();renderGpu();renderScnBadge()
   document.getElementById('verdict')!.className='verdict';document.getElementById('log')!.innerHTML=''
-  logMsg('Pronto. Abra as seletoras (overhead), ligue a bateria e siga o fluxo.','')
+  logMsg('Pronto. Condição: '+tp.label+' (OAT '+S.oat+'°C'+(S.elev?', '+S.elev+' ft':'')+'). Abra as seletoras, ligue a bateria e siga o fluxo.','')
   if(S.scenario&&S.scenario!=='normal')logMsg('⚠ Cenário de AVARIA armado: sensor de velocidade do starter falho — o STARTER ON não vai apagar a 46% Ng (faça engine shutdown).','e-warn')
+  if(S.oat<=-18&&!S.gpuConnected)logMsg('OAT muito baixa ('+S.oat+'°C) — GPU recomendada para a partida (POH).','e-warn')
 }
 const GPU_V=27.5
 const pwr=()=>S.battery||(S.gpuConnected&&S.extPwr==='BUS')
@@ -38,13 +41,14 @@ const BOOTDUR=3.0
 const BOOTLINES:[number,string][]=[[0.3,'AHRS ALIGN'],[0.9,'AIR DATA'],[1.5,'ENGINE / EIS'],[2.0,'DATABASE']]
 function updBootLines(t:number){document.getElementById('eb-lines')!.innerHTML=BOOTLINES.filter(l=>t>=l[0]).map(l=>`<div><span>${l[1]}</span><span class="ok">OK</span></div>`).join('')}
 const idleNg=()=>S.fuelCondition==='HIGH'?71:62;const SELF=50;const AUTOCUT=46,SUSTAIN=45
+const TEMPS:any={frioext:{label:'Frio extremo',oat:-25,elev:0},frio:{label:'Frio',oat:-10,elev:0},isa:{label:'Padrão (ISA)',oat:15,elev:0},quente:{label:'Quente',oat:30,elev:0},mquente:{label:'Muito quente',oat:43,elev:0},elev:{label:'Quente + elevação',oat:35,elev:5000}}
 function logMsg(m:string,c:string){const s=S.t>0?` <span class="snap">[Ng ${S.Ng.toFixed(0)}% · ITT ${S.ITT.toFixed(0)}° · óleo ${S.oilPsi.toFixed(0)}]</span>`:''
   S.log.unshift(`<div><span class="t">${S.t.toFixed(1)}s</span> <span class="${c}">${m}</span>${s}</div>`);document.getElementById('log')!.innerHTML=S.log.join('')}
 
 /* ---------- redlines dinâmicas (fidelidade EX) ---------- */
 // Torque: com AVIONICS 2 OFF a redline trava em 2397 (POH). Com AV2 ON ela é
 // "dinâmica" — aqui modelada caindo com OAT alta (proxy de densidade do ar).
-function trqRL(){return S.av2!=='ON'?2397:Math.max(1865,Math.round(2397-Math.max(0,S.oat-15)*9))}
+function trqRL(){return S.av2!=='ON'?2397:Math.max(1865,Math.round(2397-Math.max(0,S.oat-15)*9-(S.elev||0)*0.05))}
 // ITT: Start mode (até auto-sustento) redline 1090°C; Run mode 850°C.
 function ittRL(){return (S.lit&&S.Ng>=55)?850:1090}
 
@@ -111,7 +115,6 @@ function setFuelCondition(v:string){
   hit.addEventListener('pointerup',end);hit.addEventListener('pointercancel',end)
   document.querySelectorAll('#fclever [data-fc]').forEach(el=>el.addEventListener('click',()=>{ensureAudio();setFuelCondition((el as HTMLElement).dataset.fc!)}))
 })()
-function renderOat(){document.querySelectorAll('#oatseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',parseFloat((b as HTMLElement).dataset.v!)===S.oat))}
 function renderScnBadge(){const el=document.getElementById('scnbadge');if(!el)return
   if(S.scenario&&S.scenario!=='normal'){el.textContent='⚠ AVARIA ARMADA: sensor de velocidade do starter falho';el.classList.add('on')}
   else el.classList.remove('on')}
@@ -159,7 +162,7 @@ document.getElementById('selectors')!.addEventListener('click',e=>{const l=(e.ta
 document.getElementById('emergSlot')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('[data-emerg]') as HTMLElement;if(!b)return;ensureAudio()
   S.emergPwr=b.dataset.emerg;logMsg('Emerg Power → '+(S.emergPwr==='NORMAL'?'NORMAL':'À FRENTE'),S.emergPwr==='NORMAL'?'':'e-bad');renderEmerg()})
 // (FUEL CONDITION agora é a manete fixa à direita — ver setupFclever / setFuelCondition)
-document.getElementById('oatseg')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;ensureAudio();S.oat=parseFloat(b.dataset.v!);if(!S.lit){S.ITT=S.oat;S.oilTemp=S.oat;S.spike=S.oat}renderOat()})
+// (OAT agora é definido pela 'Temperatura / Condição' na tela inicial)
 function renderGpu(){document.querySelectorAll('#gpuseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',(((b as HTMLElement).dataset.gpu==='on')===S.gpuConnected)))}
 document.getElementById('gpuseg')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;ensureAudio();const on=b.dataset.gpu==='on';if(on!==S.gpuConnected){S.gpuConnected=on;logMsg('Fonte externa (GPU) '+(on?'CONECTADA (~27,5 V) — selecione EXT POWER em BUS/STARTER':'desconectada'),on?'e-good':'e-warn')}renderGpu()})
 
@@ -184,7 +187,7 @@ function buildRounds(){document.getElementById('rounds')!.innerHTML=RG.map(g=>{l
   s+=`<line id="nd-${g.k}" x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy-R+8}" stroke="#fff" stroke-width="3" stroke-linecap="round" transform="rotate(${v2a(g,0)},${cx},${cy})"/>`
   s+=`<circle cx="${cx}" cy="${cy}" r="5" fill="#cfd6df"/>`
   s+=`<text id="tx-${g.k}" x="${cx}" y="130" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-weight="700" font-size="26">0</text></svg>`;return s}).join('')}
-function updRounds(){RG.forEach(g=>{const v=S[g.k]||0;document.getElementById('nd-'+g.k)!.setAttribute('transform',`rotate(${v2a(g,v).toFixed(1)},${cx},${cy})`)
+function updRounds(){RG.forEach(g=>{const v=(S[g.k]||0)+((S.osc&&S.osc[g.k])||0);document.getElementById('nd-'+g.k)!.setAttribute('transform',`rotate(${v2a(g,v).toFixed(1)},${cx},${cy})`)
   const rl=rlVal(g);const rlEl=document.getElementById('rl-'+g.k)
   if(rl&&rlEl){const[a,b]=apt(cx,cy,R+6,v2a(g,rl)),[c,d]=apt(cx,cy,R-6,v2a(g,rl));rlEl.setAttribute('x1',a.toFixed(1));rlEl.setAttribute('y1',b.toFixed(1));rlEl.setAttribute('x2',c.toFixed(1));rlEl.setAttribute('y2',d.toFixed(1))}
   const tx=document.getElementById('tx-'+g.k)!;tx.textContent=v.toFixed(g.dec);let col='#fff'
@@ -200,7 +203,7 @@ const HB:any[]=[
 ]
 function buildHB(){HB.forEach(h=>{document.getElementById(h.t)!.innerHTML=h.bands.map((b:any)=>`<div class="hband" style="left:${(b[0]-h.min)/(h.max-h.min)*100}%;width:${(b[1]-b[0])/(h.max-h.min)*100}%;background:${CM[b[2]]};opacity:.4"></div>`).join('')+`<div class="hneedle" id="nh-${h.k}"></div>`})}
 function updHB(){HB.forEach(h=>{const v=S[h.k]||0;document.getElementById('nh-'+h.k)!.style.left=Math.max(0,Math.min(100,(v-h.min)/(h.max-h.min)*100))+'%';document.getElementById(h.d)!.textContent=v.toFixed(h.dec)})}
-function updExtras(){document.getElementById('d-np')!.textContent=S.Np.toFixed(0);document.getElementById('d-ff')!.textContent=S.fflow.toFixed(0)
+function updExtras(){document.getElementById('d-np')!.textContent=(S.Np+((S.osc&&S.osc.Np)||0)).toFixed(0);document.getElementById('d-ff')!.textContent=(S.fflow+((S.osc&&S.osc.fflow)||0)).toFixed(0)
   document.getElementById('d-bat')!.textContent=S.batAmps.toFixed(0);const volt=document.getElementById('d-volt')!;volt.textContent=S.busVolts.toFixed(1)
   volt.style.color=(S.busVolts>0&&S.busVolts<23)||S.busVolts>32.5?'#ff5046':'#fff'
   document.getElementById('fq-l')!.style.height=(S.fuelL/1110*100)+'%';document.getElementById('fq-r')!.style.height=(S.fuelR/1110*100)+'%'
@@ -256,12 +259,12 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   S.fflow+=(ffTarget-S.fflow)*1.6*dt
   // --- ITT (física) --- temperatura de equilíbrio = idle + "bump" (combustível/ar): muito
   // combustível com pouco ar (Ng baixo) => pico; atraso térmico faz a ITT subir/descer suave.
-  const ittIdle=(S.fuelCondition==='HIGH'?665:625)+Math.max(0,(S.oat-15))*2.5
+  const ittIdle=(S.fuelCondition==='HIGH'?665:625)+Math.max(0,(S.oat-15))*2.5+(S.elev||0)/1000*8
   const bump=S.lit?3.3*S.fflow*Math.max(0,(SELF-S.Ng))/SELF:0
   const ittEq=S.lit?(ittIdle+bump):S.oat
   S.ITT+=(ittEq-S.ITT)*(S.lit?2.0:1.0)*dt
   S.peakITT=Math.max(S.peakITT,S.ITT);if(S.ITT>1090&&!S.firedHot){S.firedHot=true;S.hotStart=true;logMsg('⚠ HOT START — ITT > 1090°C! Leve FUEL CONDITION a CUTOFF','e-bad')}
-  S.oilPsi+=((S.Ng<3?0:Math.min(S.lit?95:140,S.Ng*1.55))-S.oilPsi)*1.1*dt
+  S.oilPsi+=((S.Ng<3?0:Math.min(S.lit?95:140,S.Ng*1.55))-S.oilPsi)*(S.oat<0?0.6:1.1)*dt
   S.oilTemp+=(((S.lit?42:S.oat))-S.oilTemp)*0.05*dt
   S.Np+=(((S.lit&&S.Ng>50)?600+(S.Ng-50)*16:(S.lit&&S.Ng>45?(S.Ng-45)*40:0))-S.Np)*0.7*dt
   S.torque+=(((S.lit&&S.Np>300)?150:0)-S.torque)*0.6*dt
@@ -276,6 +279,10 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   if(S.lit){const burn=S.fflow/3600*dt;if(S.selL==='ON')S.fuelL-=burn*(S.selR==='ON'?.5:1);if(S.selR==='ON')S.fuelR-=burn*(S.selL==='ON'?.5:1)}
   if(S.lit&&!S.starter&&Math.abs(S.Ng-idleNg())<6&&S.ITT<720){S.idleStable+=dt;if(S.idleStable>1.5&&!S.firedIdle){S.firedIdle=true;S.idleReached=true;S.idleITT=S.ITT;logMsg('Idle estável — motor em auto-sustento ✓','e-good')}}else S.idleStable=0
   if(S.idleReached)S.idleITT=S.ITT
+  // oscilação suave após estabilizar (números não ficam estáticos/redondos)
+  if(S.lit&&S.Ng>55&&!cranking){const tt=S.t+(S.phase||0)
+    S.osc={torque:10*Math.sin(tt*1.0+0.5)+5*Math.sin(tt*2.4+2.0),ITT:1.3*Math.sin(tt*0.7+0.3)+0.6*Math.sin(tt*1.9),Ng:0.13*Math.sin(tt*0.8)+0.06*Math.sin(tt*2.1+1.5),Np:3.5*Math.sin(tt*1.3)+2*Math.sin(tt*2.9+1.1),fflow:1.3*Math.sin(tt*0.9+1.2)}}
+  else S.osc=null
   if(hornGain){const beat=Math.floor(S.t*3)%2;hornGain.gain.value=selWarn()?(beat?0.05:0):0}
   updRounds();updHB();updExtras();drawCAS()
   const eisP=pwr()&&S.av1==='ON';const eis=document.getElementById('eis')!
@@ -307,7 +314,7 @@ document.getElementById('analyze')!.addEventListener('click',analyze)
 document.getElementById('reset')!.addEventListener('click',openInit)
 
 // ---- Tela de inicialização (combustível + fonte externa) ----
-let initGpuSel=false,initScnSel='normal'
+let initGpuSel=false,initScnSel='normal',initTempSel='isa'
 function updInitLabels(){const l=+(document.getElementById('ir-l') as HTMLInputElement).value;const r=+(document.getElementById('ir-r') as HTMLInputElement).value
   document.getElementById('il-l')!.textContent=String(l);document.getElementById('il-r')!.textContent=String(r)
   document.getElementById('il-total')!.textContent=String(l+r);document.getElementById('il-gal')!.textContent=String(Math.round((l+r)/6.7))}
@@ -317,17 +324,21 @@ function syncInit(){initGpuSel=S.initGpu??false
   updInitLabels()
   document.querySelectorAll('#initgpu button').forEach(b=>(b as HTMLElement).classList.toggle('active',((b as HTMLElement).dataset.gpu==='on')===initGpuSel))
   initScnSel=S.initScenario??'normal'
-  document.querySelectorAll('#initscn button').forEach(b=>(b as HTMLElement).classList.toggle('active',(b as HTMLElement).dataset.scn===initScnSel))}
+  document.querySelectorAll('#initscn button').forEach(b=>(b as HTMLElement).classList.toggle('active',(b as HTMLElement).dataset.scn===initScnSel))
+  initTempSel=S.initTemp??'isa'
+  document.querySelectorAll('#inittemp button').forEach(b=>(b as HTMLElement).classList.toggle('active',(b as HTMLElement).dataset.temp===initTempSel))}
 function openInit(){syncInit();document.getElementById('initov')!.classList.remove('hidden')}
 ;['ir-l','ir-r'].forEach(id=>document.getElementById(id)!.addEventListener('input',updInitLabels))
 document.getElementById('fuelpreset')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;const v=b.dataset.fuel!;(document.getElementById('ir-l') as HTMLInputElement).value=v;(document.getElementById('ir-r') as HTMLInputElement).value=v;updInitLabels()})
 document.getElementById('initgpu')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initGpuSel=b.dataset.gpu==='on';document.querySelectorAll('#initgpu button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
 document.getElementById('initscn')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initScnSel=b.dataset.scn!;document.querySelectorAll('#initscn button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
+document.getElementById('inittemp')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initTempSel=b.dataset.temp!;document.querySelectorAll('#inittemp button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
 document.getElementById('initstart')!.addEventListener('click',()=>{ensureAudio()
   S.initFuelL=+(document.getElementById('ir-l') as HTMLInputElement).value
   S.initFuelR=+(document.getElementById('ir-r') as HTMLInputElement).value
   S.initGpu=initGpuSel
   S.initScenario=initScnSel
+  S.initTemp=initTempSel
   reset()
   document.getElementById('initov')!.classList.add('hidden')})
 syncInit()
