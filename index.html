@@ -70,8 +70,21 @@
 
     <div class="pedestal">
       <div class="ped-title">Pedestal</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;color:#9fb0c4;margin-bottom:10px">Fuel Condition → manete fixa à direita ▸</div>
       <div class="ped-emerg" id="emergSlot"></div>
+      <div class="fclever" id="fclever">
+        <div class="fcl-title">Fuel<br>Cond</div>
+        <div class="fcl-track" id="fcl-track">
+          <svg class="fcl-slotsvg" viewBox="0 0 26 230" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M15,16 L15,96 L8,102 L15,110 L15,190 L8,196 L15,208" fill="none" stroke="#04060a" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15,16 L15,96 L8,102 L15,110 L15,190 L8,196 L15,208" fill="none" stroke="#0e141c" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="fcl-det fcl-det-high" data-fc="HIGH"><span>HIGH IDLE</span></div>
+          <div class="fcl-det fcl-det-low" data-fc="LOW"><span>LOW IDLE</span></div>
+          <div class="fcl-det fcl-det-cut" data-fc="CUTOFF"><span>CUTOFF</span></div>
+          <div class="fcl-handle" id="fcl-handle"></div>
+          <div class="fcl-hit" id="fcl-hit"></div>
+        </div>
+      </div>
     </div>
   </div><!-- /colR -->
 
@@ -163,22 +176,6 @@
       <button class="btn ghost" id="init-back">Voltar</button>
       <button class="btn primary" id="init-next">Avançar</button>
     </div>
-  </div>
-</div>
-
-<!-- MANETE FUEL CONDITION (fixa à direita, sempre visível) -->
-<div class="fclever" id="fclever">
-  <div class="fcl-title">Fuel<br>Cond</div>
-  <div class="fcl-track" id="fcl-track">
-    <svg class="fcl-slotsvg" viewBox="0 0 26 230" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M15,16 L15,96 L8,102 L15,110 L15,190 L8,196 L15,208" fill="none" stroke="#04060a" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M15,16 L15,96 L8,102 L15,110 L15,190 L8,196 L15,208" fill="none" stroke="#0e141c" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <div class="fcl-det fcl-det-high" data-fc="HIGH"><span>HIGH IDLE</span></div>
-    <div class="fcl-det fcl-det-low" data-fc="LOW"><span>LOW IDLE</span></div>
-    <div class="fcl-det fcl-det-cut" data-fc="CUTOFF"><span>CUTOFF</span></div>
-    <div class="fcl-handle" id="fcl-handle"></div>
-    <div class="fcl-hit" id="fcl-hit"></div>
   </div>
 </div>
 

@@ -9,19 +9,18 @@ body{
   font-family:'Hanken Grotesk',system-ui,sans-serif;
   background:radial-gradient(1200px 600px at 50% -10%,#16243a 0%,transparent 60%),linear-gradient(180deg,var(--bg2),var(--bg));
   background-attachment:fixed;color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased;
-  padding-right:calc(58px + env(safe-area-inset-right)); /* faixa reservada p/ a manete FUEL CONDITION */
+  /* faixa da manete reservada só no desktop (ver @media min-width:900px) */
 }
-.app{max-width:1120px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;}
-/* mobile: os wrappers somem (display:contents) e ordenamos os blocos individuais:
-   EIS -> overhead -> switches -> pedestal -> config -> log */
+.app{max-width:1120px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1.9fr 1fr;column-gap:10px;row-gap:12px;align-items:start;}
+/* mobile: cockpit em grade — EIS e overhead em largura total; switches | pedestal lado a lado */
 .colL,.colR,.bottom{display:contents;}
-header{order:0;margin-bottom:0;}
-.instruments{order:1;}
-.overhead{order:2;}
-.swcard{order:3;}
-.pedestal{order:4;}
-.configcard{order:5;}
-.logcard{order:6;}
+header{grid-column:1/-1;grid-row:1;margin-bottom:0;}
+.instruments{grid-column:1/-1;grid-row:2;}
+.overhead{grid-column:1/-1;grid-row:3;}
+.swcard{grid-column:1;grid-row:4;}
+.pedestal{grid-column:2;grid-row:4;}
+.configcard{grid-column:1/-1;grid-row:5;}
+.logcard{grid-column:1/-1;grid-row:6;}
 header{text-align:center;margin-bottom:10px;}
 .tail{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--cyan);letter-spacing:.16em;font-size:.66rem;text-transform:uppercase;opacity:.85;}
 h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;text-transform:uppercase;margin-top:4px;}
@@ -204,9 +203,9 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
 .initcard .btn{width:100%;margin-top:8px;padding:15px;}
 
 /* ---------- MANETE FUEL CONDITION (fixa à direita, flutuante) ---------- */
-.fclever{position:fixed;top:50%;right:max(0px,calc(50vw - 605px));transform:translateY(-50%);z-index:70;width:54px;
-  background:linear-gradient(180deg,#2b3037,#161b21);border:1px solid #0c1015;border-left:2px solid #3a4250;
-  border-radius:12px 0 0 12px;padding:12px 6px;box-shadow:-10px 0 30px rgba(0,0,0,.65),0 8px 24px rgba(0,0,0,.5);
+.fclever{position:relative;z-index:70;width:54px;margin:8px auto 2px;
+  background:linear-gradient(180deg,#2b3037,#161b21);border:1px solid #0c1015;
+  border-radius:12px;padding:10px 6px;box-shadow:0 6px 16px rgba(0,0,0,.5);
   display:flex;flex-direction:column;align-items:center;gap:8px;}
 .fcl-title{font-family:'Saira Condensed',sans-serif;font-weight:700;text-transform:uppercase;font-size:.56rem;letter-spacing:.06em;color:#cdd4dd;text-align:center;line-height:1.05;}
 .fcl-track{position:relative;width:26px;height:230px;margin-left:auto;}
@@ -227,3 +226,21 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
 .fcl-handle.grabbing{transition:none;}
 .fcl-hit{position:absolute;top:-8px;bottom:-8px;left:0;right:-10px;z-index:5;cursor:grab;touch-action:none;}
 .fcl-hit:active{cursor:grabbing;}
+/* desktop: manete volta a ser fixa na lateral (sai do fluxo do pedestal) */
+@media(min-width:900px){
+  body{padding-right:calc(58px + env(safe-area-inset-right));}
+  .fclever{position:fixed;top:50%;right:max(0px,calc(50vw - 605px));transform:translateY(-50%);margin:0;border-left:2px solid #3a4250;border-radius:12px 0 0 12px;box-shadow:-10px 0 30px rgba(0,0,0,.65),0 8px 24px rgba(0,0,0,.5);}
+}
+/* mobile: switches compactos (cabem 4 por linha ao lado do pedestal) */
+@media(max-width:899px){
+  .swcard{padding:10px 6px;}
+  .swrow{gap:3px;margin-bottom:13px;justify-content:space-between;}
+  .switch{width:50px;}
+  .sw-track{width:28px;}
+  .sw-knob{width:22px;}
+  .sw-labels{left:31px;}
+  .sw-labels span{font-size:.5rem;}
+  .sw-name{font-size:.55rem;line-height:1.05;}
+  .pedestal{display:flex;flex-direction:column;align-items:center;}
+  .pedestal .ped-title{align-self:flex-start;}
+}
