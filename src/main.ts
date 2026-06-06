@@ -105,7 +105,7 @@ function renderSwitches(){document.getElementById('swpanel')!.innerHTML=PANEL.ma
 function renderEmerg(){const fwd=S.emergPwr==='FWD'
   document.getElementById('emergSlot')!.innerHTML=`<div class="switch"><div class="sw-wrap">`+
     `<div class="sw-track" data-emergtrack style="height:60px"><div class="sw-pos"></div><div class="sw-pos"></div><div class="sw-knob ${fwd?'guard':''}" style="top:${fwd?2:30}px"></div></div>`+
-    `<div class="sw-labels" style="height:60px"><span data-emerg="FWD" class="${fwd?'act':''}">À FRENTE</span><span data-emerg="NORMAL" class="${!fwd?'act':''}">NORMAL</span></div>`+
+    `<div class="sw-labels" style="height:60px"><span data-emerg="FWD" class="${fwd?'act':''}">FWD</span><span data-emerg="NORMAL" class="${!fwd?'act':''}">NORM</span></div>`+
     `</div><div class="sw-name">Emerg Power</div></div>`}
 function renderSelectors(){document.getElementById('selectors')!.innerHTML=['L','R'].map(s=>{const on=S['sel'+s]==='ON';const side=s==='L'?'left':'right'
   return `<div class="fs"><div class="sel-dial ${side} ${on?'on':''}" data-sel="${s}"><span class="sel-lbl sel-off">OFF</span><span class="sel-lbl sel-on">ON·165</span><div class="lever"></div><div class="pivot"></div></div><div class="fs-name">${s==='L'?'Esquerda':'Direita'}</div></div>`}).join('')}
