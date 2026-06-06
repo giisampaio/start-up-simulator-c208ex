@@ -16,9 +16,9 @@ body{
 .colL,.colR,.bottom{display:contents;}
 header{grid-column:1/-1;grid-row:1;margin-bottom:0;}
 .instruments{grid-column:1/-1;grid-row:2;}
-.overhead{grid-column:1/-1;grid-row:3;}
-.swcard{grid-column:1;grid-row:4;}
-.pedestal{grid-column:2;grid-row:4;}
+.swcard{grid-column:1;grid-row:3;}
+.pedestal{grid-column:2;grid-row:3;}
+.overhead{grid-column:1/-1;grid-row:4;}
 .configcard{grid-column:1/-1;grid-row:5;}
 .logcard{grid-column:1/-1;grid-row:6;}
 header{text-align:center;margin-bottom:10px;}
@@ -237,16 +237,41 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
 }
 /* mobile: switches compactos (cabem 4 por linha ao lado do pedestal) */
 @media(max-width:899px){
-  .swcard{padding:10px 7px;}
-  .swrow{gap:4px;margin-bottom:14px;justify-content:space-between;}
+  .app{row-gap:8px;}
+  h1{font-size:1.25rem;}
+  .tail{font-size:.58rem;}
+  /* EIS compacto (mantendo legibilidade) — p/ caber EIS + cockpit na mesma tela */
+  .eis{padding:7px;min-height:0;}
+  .rounds-row svg{max-width:72px;}
+  .cas{min-height:34px;margin-top:5px;padding:4px 8px;}
+  .cas-h{margin-bottom:3px;padding-bottom:2px;}
+  .cas-msg{font-size:.74rem;padding:2px 6px;margin-bottom:2px;}
+  .readouts{gap:0 12px;margin-top:6px;}
+  .digi{padding:1px 4px;}
+  .digi .dv{font-size:.9rem;}
+  .digi .dl{font-size:.64rem;}
+  .hbar{padding:1px 4px;}
+  .hbar .hl{font-size:.62rem;margin-bottom:0;}
+  .htrack{height:8px;}
+  .fuelqty{padding:1px;gap:6px;}
+  .fqt{height:12px;}
+  .fq .fqv{font-size:.66rem;}
+  .fq .fql{font-size:.56rem;}
+  /* overhead compacto */
+  .overhead{padding:6px 10px 7px;}
+  .oh-title{font-size:.66rem;}
+  .placard{font-size:.54rem;margin-top:4px;}
+  /* switches mais baixos */
+  .swcard{padding:8px 7px;}
+  .swpanel{padding:8px;}
+  .swrow{gap:4px;margin-bottom:8px;justify-content:space-between;}
   .switch{width:60px;align-items:flex-start;}
   .sw-track{width:30px;}
   .sw-knob{width:24px;}
   .sw-labels{left:33px;}
   .sw-labels span{font-size:.53rem;}
-  .sw-name{align-self:stretch;text-align:left;}
-  .sw-name{font-size:.58rem;line-height:1.05;}
-  .pedestal{display:flex;flex-direction:column;align-items:center;padding:10px 6px;}
+  .sw-name{font-size:.57rem;line-height:1.04;margin-top:5px;align-self:stretch;text-align:left;}
+  .pedestal{display:flex;flex-direction:column;align-items:center;padding:8px 6px;}
   .pedestal .ped-title{align-self:flex-start;}
   .fclever{width:54px;padding:8px 4px;}
 }
