@@ -99,14 +99,15 @@ function setFuelCondition(v:string){
   renderFclever()
 }
 // manete arrastável (com gate no CUTOFF)
-;(function setupFclever(){const track=document.getElementById('fcl-track'),handle=document.getElementById('fcl-handle');if(!track||!handle)return
-  const frac=(e:any)=>{const r=track.getBoundingClientRect();return Math.max(0.04,Math.min(0.93,(e.clientY-r.top)/r.height))}
-  const nearest=(f:number)=> f>0.70?'CUTOFF':(f<0.26?'HIGH':'LOW')  // gate: só vai a CUTOFF puxando bem pra baixo
+;(function setupFclever(){const track=document.getElementById('fcl-track'),handle=document.getElementById('fcl-handle'),hit=document.getElementById('fcl-hit');if(!track||!handle||!hit)return
+  const frac=(e:any)=>{const r=track.getBoundingClientRect();return Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}
+  const nearest=(f:number)=> f>0.70?'CUTOFF':(f<0.30?'HIGH':'LOW')  // gate: só vai a CUTOFF puxando bem pra baixo
+  const move=(e:any)=>{handle.style.setProperty('offset-distance',(frac(e)*100)+'%')}
   let drag=false
-  handle.addEventListener('pointerdown',(e:any)=>{e.preventDefault();ensureAudio();drag=true;handle.classList.add('grabbing');try{handle.setPointerCapture(e.pointerId)}catch(_){}})
-  handle.addEventListener('pointermove',(e:any)=>{if(!drag)return;handle.style.setProperty('offset-distance',(frac(e)*100)+'%')})
+  hit.addEventListener('pointerdown',(e:any)=>{e.preventDefault();ensureAudio();drag=true;handle.classList.add('grabbing');try{hit.setPointerCapture(e.pointerId)}catch(_){}move(e)})
+  hit.addEventListener('pointermove',(e:any)=>{if(!drag)return;move(e)})
   const end=(e:any)=>{if(!drag)return;drag=false;handle.classList.remove('grabbing');setFuelCondition(nearest(frac(e)))}
-  handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end)
+  hit.addEventListener('pointerup',end);hit.addEventListener('pointercancel',end)
   document.querySelectorAll('#fclever [data-fc]').forEach(el=>el.addEventListener('click',()=>{ensureAudio();setFuelCondition((el as HTMLElement).dataset.fc!)}))
 })()
 function renderOat(){document.querySelectorAll('#oatseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',parseFloat((b as HTMLElement).dataset.v!)===S.oat))}

@@ -199,8 +199,10 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
   background:radial-gradient(circle at 36% 30%,#ff8079,#d12c22 60%,#8d150e);
   border:1px solid #5e0f0a;border-radius:50%;
   box-shadow:0 5px 12px rgba(0,0,0,.6),inset 0 2px 4px rgba(255,255,255,.45),inset 0 -3px 5px rgba(0,0,0,.45);
-  cursor:grab;touch-action:none;transition:offset-distance .36s cubic-bezier(.34,1.15,.5,1);}
+  pointer-events:none;transition:offset-distance .36s cubic-bezier(.34,1.15,.5,1);}
 .fcl-handle::before{content:'';position:absolute;inset:0;border-radius:50%;mix-blend-mode:overlay;
   background:conic-gradient(rgba(255,255,255,.18),rgba(0,0,0,.22),rgba(255,255,255,.18),rgba(0,0,0,.22),rgba(255,255,255,.18),rgba(0,0,0,.22),rgba(255,255,255,.18),rgba(0,0,0,.22),rgba(255,255,255,.18));}
 .fcl-handle::after{content:'';position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e85a50,#b8241b);box-shadow:inset 0 1px 2px rgba(0,0,0,.4);}
-.fcl-handle.grabbing{transition:none;cursor:grabbing;}
+.fcl-handle.grabbing{transition:none;}
+.fcl-hit{position:absolute;top:-8px;bottom:-8px;left:0;right:-10px;z-index:5;cursor:grab;touch-action:none;}
+.fcl-hit:active{cursor:grabbing;}
