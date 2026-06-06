@@ -99,63 +99,70 @@
 <!-- TELA DE INICIALIZAÇÃO -->
 <div class="initov" id="initov">
   <div class="initcard">
-    <div class="init-title">Configuração inicial</div>
-    <div class="init-sub">Cessna 208B Grand Caravan EX · PT6A-140</div>
-
-    <div class="init-sec">
-      <div class="init-lbl">Combustível</div>
-      <div class="seg" id="fuelpreset">
-        <button data-fuel="1110">Cheio</button>
-        <button data-fuel="833">¾</button>
-        <button data-fuel="555">½</button>
-        <button data-fuel="150">Reserva</button>
-      </div>
-      <div class="init-tank">
-        <label>Tanque Esquerdo <span><b id="il-l">1110</b> lb</span></label>
-        <input type="range" id="ir-l" min="0" max="1110" step="10" value="1110">
-      </div>
-      <div class="init-tank">
-        <label>Tanque Direito <span><b id="il-r">1110</b> lb</span></label>
-        <input type="range" id="ir-r" min="0" max="1110" step="10" value="1110">
-      </div>
-      <div class="init-total">Total: <b id="il-total">2220</b> lb · <b id="il-gal">331</b> gal</div>
+    <div class="init-head">
+      <div class="init-eyebrow">Grand Caravan 208B EX · Briefing de partida</div>
+      <div class="init-title" id="init-steptitle">Temperatura &amp; condição</div>
+      <div class="init-dots" id="init-dots"></div>
     </div>
 
-    <div class="init-sec">
-      <div class="init-lbl">Temperatura / Condição</div>
-      <div class="seg" id="inittemp">
-        <button data-temp="frioext">Frio extremo</button>
-        <button data-temp="frio">Frio</button>
-        <button data-temp="isa">Padrão</button>
-        <button data-temp="quente">Quente</button>
-        <button data-temp="mquente">Muito quente</button>
-        <button data-temp="elev">Quente+elev</button>
+    <div class="init-body">
+      <div class="init-step" data-step="1">
+        <p class="init-help">Condição do dia — afeta o comportamento da partida (ITT de idle, óleo, redline de torque).</p>
+        <div class="seg" id="inittemp">
+          <button data-temp="frioext">Frio extremo</button>
+          <button data-temp="frio">Frio</button>
+          <button data-temp="isa">Padrão</button>
+          <button data-temp="quente">Quente</button>
+          <button data-temp="mquente">Muito quente</button>
+          <button data-temp="elev">Quente+elev</button>
+        </div>
+      </div>
+
+      <div class="init-step" data-step="2" hidden>
+        <p class="init-help">Quantidade por tanque — pode criar desbalanço de propósito para treino.</p>
+        <div class="seg" id="fuelpreset">
+          <button data-fuel="1110">Cheio</button>
+          <button data-fuel="833">¾</button>
+          <button data-fuel="555">½</button>
+          <button data-fuel="150">Reserva</button>
+        </div>
+        <div class="init-tank">
+          <label>Tanque Esquerdo <span><b id="il-l">1110</b> lb</span></label>
+          <input type="range" id="ir-l" min="0" max="1110" step="10" value="1110">
+        </div>
+        <div class="init-tank">
+          <label>Tanque Direito <span><b id="il-r">1110</b> lb</span></label>
+          <input type="range" id="ir-r" min="0" max="1110" step="10" value="1110">
+        </div>
+        <div class="init-total">Total: <b id="il-total">2220</b> lb · <b id="il-gal">331</b> gal</div>
+      </div>
+
+      <div class="init-step" data-step="3" hidden>
+        <p class="init-help">Carrinho de fonte externa (~27,5 V). Se conectar, depois selecione EXT POWER no painel.</p>
+        <div class="seg" id="initgpu">
+          <button data-gpu="off">Desconectada</button>
+          <button data-gpu="on">Conectada</button>
+        </div>
+      </div>
+
+      <div class="init-step" data-step="4" hidden>
+        <p class="init-help">Opcional — marque as panes que <b>podem</b> ocorrer; o sim sorteia 1. Deixe vazio para partida normal.</p>
+        <div class="seg" id="initpanes">
+          <button data-pane="hotStart">Partida quente</button>
+          <button data-pane="noLight">Sem light-off</button>
+          <button data-pane="hungStart">Pendurada</button>
+          <button data-pane="fire">Fogo</button>
+          <button data-pane="sensorFail">Sensor velocidade</button>
+          <button data-pane="weakBattery">Bateria fraca</button>
+          <button data-pane="gearDecouple">Gear decouple</button>
+        </div>
       </div>
     </div>
 
-    <div class="init-sec">
-      <div class="init-lbl">Fonte Externa (GPU ~27,5 V)</div>
-      <div class="seg" id="initgpu">
-        <button data-gpu="off">Desconectada</button>
-        <button data-gpu="on">Conectada</button>
-      </div>
+    <div class="init-nav">
+      <button class="btn ghost" id="init-back">Voltar</button>
+      <button class="btn primary" id="init-next">Avançar</button>
     </div>
-
-    <div class="init-sec">
-      <div class="init-lbl">Treino de Panes (opcional)</div>
-      <div class="seg" id="initpanes">
-        <button data-pane="hotStart">Partida quente</button>
-        <button data-pane="noLight">Sem light-off</button>
-        <button data-pane="hungStart">Pendurada</button>
-        <button data-pane="fire">Fogo</button>
-        <button data-pane="sensorFail">Sensor velocidade</button>
-        <button data-pane="weakBattery">Bateria fraca</button>
-        <button data-pane="gearDecouple">Gear decouple</button>
-      </div>
-      <div style="font-size:.7rem;color:var(--muted);margin-top:6px">Marque as panes que podem ocorrer — o sim sorteia 1. Vazio = partida normal.</div>
-    </div>
-
-    <button class="btn primary" id="initstart">Iniciar simulação</button>
   </div>
 </div>
 

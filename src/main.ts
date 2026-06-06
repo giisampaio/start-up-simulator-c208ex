@@ -391,21 +391,29 @@ function syncInit(){initGpuSel=S.initGpu??false
   document.querySelectorAll('#initpanes button').forEach(b=>(b as HTMLElement).classList.toggle('active',initPanesSel.indexOf((b as HTMLElement).dataset.pane!)>=0))
   initTempSel=S.initTemp??'isa'
   document.querySelectorAll('#inittemp button').forEach(b=>(b as HTMLElement).classList.toggle('active',(b as HTMLElement).dataset.temp===initTempSel))}
-function openInit(){syncInit();document.getElementById('initov')!.classList.remove('hidden')}
+function openInit(){syncInit();showStep(1);document.getElementById('initov')!.classList.remove('hidden')}
 ;['ir-l','ir-r'].forEach(id=>document.getElementById(id)!.addEventListener('input',updInitLabels))
 document.getElementById('fuelpreset')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;const v=b.dataset.fuel!;(document.getElementById('ir-l') as HTMLInputElement).value=v;(document.getElementById('ir-r') as HTMLInputElement).value=v;updInitLabels()})
 document.getElementById('initgpu')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initGpuSel=b.dataset.gpu==='on';document.querySelectorAll('#initgpu button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
 document.getElementById('initpanes')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;const id=b.dataset.pane!;const i=initPanesSel.indexOf(id);if(i>=0)initPanesSel.splice(i,1);else initPanesSel.push(id);b.classList.toggle('active')})
 document.getElementById('inittemp')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('button') as HTMLElement;if(!b)return;initTempSel=b.dataset.temp!;document.querySelectorAll('#inittemp button').forEach(x=>(x as HTMLElement).classList.toggle('active',x===b))})
-document.getElementById('initstart')!.addEventListener('click',()=>{ensureAudio()
+function startSim(){ensureAudio()
   S.initFuelL=+(document.getElementById('ir-l') as HTMLInputElement).value
   S.initFuelR=+(document.getElementById('ir-r') as HTMLInputElement).value
-  S.initGpu=initGpuSel
-  S.initPanes=initPanesSel.slice()
-  S.initTemp=initTempSel
-  reset()
-  document.getElementById('initov')!.classList.add('hidden')})
-syncInit()
+  S.initGpu=initGpuSel;S.initPanes=initPanesSel.slice();S.initTemp=initTempSel
+  reset();document.getElementById('initov')!.classList.add('hidden')}
+// ---- wizard (etapas) ----
+let curStep=1;const NSTEPS=4
+const STEP_TITLES=['Temperatura & condição','Combustível','Fonte externa (GPU)','Treino de panes (opcional)']
+function showStep(n:number){curStep=Math.max(1,Math.min(NSTEPS,n))
+  document.querySelectorAll('.init-step').forEach(el=>{(el as HTMLElement).hidden=(+(el as HTMLElement).dataset.step!)!==curStep})
+  document.getElementById('init-steptitle')!.textContent=STEP_TITLES[curStep-1]
+  document.getElementById('init-dots')!.innerHTML=Array.from({length:NSTEPS},(_,i)=>`<span class="${i+1===curStep?'on':''}"></span>`).join('')
+  ;(document.getElementById('init-back') as HTMLElement).style.visibility=curStep===1?'hidden':'visible'
+  document.getElementById('init-next')!.textContent=curStep===NSTEPS?'Iniciar simulação':'Avançar'}
+document.getElementById('init-back')!.addEventListener('click',()=>showStep(curStep-1))
+document.getElementById('init-next')!.addEventListener('click',()=>{ensureAudio();if(curStep<NSTEPS)showStep(curStep+1);else startSim()})
+syncInit();showStep(1)
 
 buildRounds();buildHB();reset();requestAnimationFrame(tick)
 
