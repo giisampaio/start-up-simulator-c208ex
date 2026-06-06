@@ -85,7 +85,7 @@ function renderEmerg(){document.getElementById('emergSlot')!.innerHTML=
   `<button data-emerg="FWD" style="flex:1;font-family:'Saira Condensed';font-weight:600;font-size:.78rem;padding:11px;border-radius:8px;border:1px solid #1b1f25;background:${S.emergPwr==='FWD'?'var(--red)':'#222a34'};color:${S.emergPwr==='FWD'?'#3a0c0a':'#aeb7c2'};cursor:pointer">À FRENTE</button></div>`}
 function renderSelectors(){document.getElementById('selectors')!.innerHTML=['L','R'].map(s=>{const on=S['sel'+s]==='ON';const side=s==='L'?'left':'right'
   return `<div class="fs"><div class="sel-dial ${side} ${on?'on':''}" data-sel="${s}"><span class="sel-lbl sel-off">OFF</span><span class="sel-lbl sel-on">ON·165</span><div class="lever"></div><div class="pivot"></div></div><div class="fs-name">${s==='L'?'Esquerda':'Direita'}</div></div>`}).join('')}
-const FC_POS:any={HIGH:0,LOW:47,CUTOFF:100}  // offset-distance (%) ao longo do trilho com gate
+const FC_POS:any={HIGH:0,LOW:50,CUTOFF:100}  // offset-distance (%) ao longo do trilho com gate
 function renderFclever(){const h=document.getElementById('fcl-handle');if(h)h.style.setProperty('offset-distance',FC_POS[S.fuelCondition]+'%')
   document.querySelectorAll('#fclever [data-fc]').forEach(el=>(el as HTMLElement).classList.toggle('act',(el as HTMLElement).dataset.fc===S.fuelCondition))}
 function setFuelCondition(v:string){
