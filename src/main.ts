@@ -26,9 +26,10 @@ function reset(){
     fuelNgAtIntro:null,oilAtIntro:null,boostAtIntro:null,emergAtStart:null,pwrAtStart:null,selsAtStart:null,ngAtStarterCut:null,idleITT:null,
     log:[],firedHot:false,firedIdle:false,finished:false})
   S.ITT=15;S.oilTemp=15;S.spike=15
-  renderSwitches();renderSelectors();renderEmerg();renderFclever();renderOat();renderGpu()
+  renderSwitches();renderSelectors();renderEmerg();renderFclever();renderOat();renderGpu();renderScnBadge()
   document.getElementById('verdict')!.className='verdict';document.getElementById('log')!.innerHTML=''
   logMsg('Pronto. Abra as seletoras (overhead), ligue a bateria e siga o fluxo.','')
+  if(S.scenario&&S.scenario!=='normal')logMsg('⚠ Cenário de AVARIA armado: sensor de velocidade do starter falho — o STARTER ON não vai apagar a 46% Ng (faça engine shutdown).','e-warn')
 }
 const GPU_V=27.5
 const pwr=()=>S.battery||(S.gpuConnected&&S.extPwr==='BUS')
@@ -111,6 +112,9 @@ function setFuelCondition(v:string){
   document.querySelectorAll('#fclever [data-fc]').forEach(el=>el.addEventListener('click',()=>{ensureAudio();setFuelCondition((el as HTMLElement).dataset.fc!)}))
 })()
 function renderOat(){document.querySelectorAll('#oatseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',parseFloat((b as HTMLElement).dataset.v!)===S.oat))}
+function renderScnBadge(){const el=document.getElementById('scnbadge');if(!el)return
+  if(S.scenario&&S.scenario!=='normal'){el.textContent='⚠ AVARIA ARMADA: sensor de velocidade do starter falho';el.classList.add('on')}
+  else el.classList.remove('on')}
 
 function setSw(k:string,v:string){ensureAudio()
   if(k==='battery'){const on=v==='on';if(on!==S.battery){S.battery=on;logMsg('Bateria '+(on?'ON':'OFF'),'')}renderSwitches();return}

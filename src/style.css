@@ -25,6 +25,8 @@ header{order:0;margin-bottom:0;}
 header{text-align:center;margin-bottom:10px;}
 .tail{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--cyan);letter-spacing:.16em;font-size:.66rem;text-transform:uppercase;opacity:.85;}
 h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;text-transform:uppercase;margin-top:4px;}
+.scnbadge{display:none;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;color:var(--red);background:rgba(255,80,70,.14);border:1px solid rgba(255,80,70,.42);border-radius:8px;padding:5px 12px;}
+.scnbadge.on{display:inline-block;}
 
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;}
 .ptitle{font-family:'Saira Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:1rem;color:var(--muted);margin-bottom:10px;}
