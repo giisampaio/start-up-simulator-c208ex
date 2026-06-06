@@ -207,7 +207,7 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
 .initcard .btn{width:100%;margin-top:8px;padding:15px;}
 
 /* ---------- MANETE FUEL CONDITION (fixa à direita, flutuante) ---------- */
-.fclever{position:relative;z-index:70;width:54px;margin:8px auto 2px;
+.fclever{position:relative;z-index:1;width:54px;margin:8px auto 2px;
   background:linear-gradient(180deg,#2b3037,#161b21);border:1px solid #0c1015;
   border-radius:12px;padding:10px 6px;box-shadow:0 6px 16px rgba(0,0,0,.5);
   display:flex;flex-direction:column;align-items:center;gap:8px;}
@@ -233,7 +233,7 @@ h1{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.7rem;tex
 /* desktop: manete volta a ser fixa na lateral (sai do fluxo do pedestal) */
 @media(min-width:900px){
   body{padding-right:calc(58px + env(safe-area-inset-right));}
-  .fclever{position:fixed;top:50%;right:max(0px,calc(50vw - 605px));transform:translateY(-50%);margin:0;border-left:2px solid #3a4250;border-radius:12px 0 0 12px;box-shadow:-10px 0 30px rgba(0,0,0,.65),0 8px 24px rgba(0,0,0,.5);}
+  .fclever{position:fixed;top:50%;right:max(0px,calc(50vw - 605px));transform:translateY(-50%);margin:0;z-index:70;border-left:2px solid #3a4250;border-radius:12px 0 0 12px;box-shadow:-10px 0 30px rgba(0,0,0,.65),0 8px 24px rgba(0,0,0,.5);}
 }
 /* mobile: switches compactos (cabem 4 por linha ao lado do pedestal) */
 @media(max-width:899px){
