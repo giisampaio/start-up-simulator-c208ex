@@ -36,7 +36,7 @@ function reset(){
   renderSwitches();renderSelectors();renderEmerg();renderFclever();renderGpu();renderScnBadge()
   document.getElementById('verdict')!.className='verdict';document.getElementById('log')!.innerHTML=''
   logMsg('Pronto. Condição: '+tp.label+' (OAT '+S.oat+'°C'+(S.elev?', '+S.elev+' ft':'')+'). Abra as seletoras, ligue a bateria e siga o fluxo.','')
-  if(S.scenario&&S.scenario!=='normal')logMsg('⚠ Cenário de AVARIA armado: sensor de velocidade do starter falho — o STARTER ON não vai apagar a 46% Ng (faça engine shutdown).','e-warn')
+  if(S.scenario&&S.scenario!=='normal')logMsg('Cenário de AVARIA armado: sensor de velocidade do starter falho — o STARTER ON não vai apagar a 46% Ng (faça engine shutdown).','e-warn')
   if(S.oat<=-18&&!S.gpuConnected)logMsg('OAT muito baixa ('+S.oat+'°C) — GPU recomendada para a partida (POH).','e-warn')
 }
 const GPU_V=27.5
@@ -102,10 +102,11 @@ function oneSwitch(k:string){const c=SW[k];const h=c.pos.length*28;const cur=cur
     <div class="sw-labels" style="height:${h+4}px">${c.pos.map((p:any)=>`<span data-sw="${k}" data-v="${p[0]}" class="${p[0]===cur?'act':''}">${p[1]}</span>`).join('')}</div>
     </div><div class="sw-name">${c.name}</div></div>`}
 function renderSwitches(){document.getElementById('swpanel')!.innerHTML=PANEL.map(row=>`<div class="swrow">${row.map(oneSwitch).join('')}</div>`).join('')}
-function renderEmerg(){document.getElementById('emergSlot')!.innerHTML=
-  `<span style="font-family:'Saira Condensed';font-weight:700;text-transform:uppercase;font-size:.66rem;color:#cdd4dd">Emerg Power</span>`+
-  `<div class="seg" style="flex:1"><button data-emerg="NORMAL" style="flex:1;font-family:'Saira Condensed';font-weight:600;font-size:.78rem;padding:11px;border-radius:8px;border:1px solid #1b1f25;background:${S.emergPwr==='NORMAL'?'var(--cyan)':'#222a34'};color:${S.emergPwr==='NORMAL'?'#06223a':'#aeb7c2'};cursor:pointer">NORMAL</button>`+
-  `<button data-emerg="FWD" style="flex:1;font-family:'Saira Condensed';font-weight:600;font-size:.78rem;padding:11px;border-radius:8px;border:1px solid #1b1f25;background:${S.emergPwr==='FWD'?'var(--red)':'#222a34'};color:${S.emergPwr==='FWD'?'#3a0c0a':'#aeb7c2'};cursor:pointer">À FRENTE</button></div>`}
+function renderEmerg(){const fwd=S.emergPwr==='FWD'
+  document.getElementById('emergSlot')!.innerHTML=`<div class="switch"><div class="sw-wrap">`+
+    `<div class="sw-track" data-emergtrack style="height:60px"><div class="sw-pos"></div><div class="sw-pos"></div><div class="sw-knob ${fwd?'guard':''}" style="top:${fwd?2:30}px"></div></div>`+
+    `<div class="sw-labels" style="height:60px"><span data-emerg="FWD" class="${fwd?'act':''}">À FRENTE</span><span data-emerg="NORMAL" class="${!fwd?'act':''}">NORMAL</span></div>`+
+    `</div><div class="sw-name">Emerg Power</div></div>`}
 function renderSelectors(){document.getElementById('selectors')!.innerHTML=['L','R'].map(s=>{const on=S['sel'+s]==='ON';const side=s==='L'?'left':'right'
   return `<div class="fs"><div class="sel-dial ${side} ${on?'on':''}" data-sel="${s}"><span class="sel-lbl sel-off">OFF</span><span class="sel-lbl sel-on">ON·165</span><div class="lever"></div><div class="pivot"></div></div><div class="fs-name">${s==='L'?'Esquerda':'Direita'}</div></div>`}).join('')}
 const FC_POS:any={HIGH:0,LOW:50,CUTOFF:100}  // offset-distance (%) ao longo do trilho com gate
@@ -135,7 +136,7 @@ function setFuelCondition(v:string){
 })()
 function renderScnBadge(){const el=document.getElementById('scnbadge');if(!el)return
   const n=(S.armedPanes&&S.armedPanes.length)||0
-  if(n>0){el.textContent='⚠ MODO TREINO DE PANES — '+n+' pane(s) armada(s)';el.classList.add('on')}
+  if(n>0){el.textContent='MODO TREINO DE PANES — '+n+' pane(s) armada(s)';el.classList.add('on')}
   else el.classList.remove('on')}
 
 function setSw(k:string,v:string){ensureAudio()
@@ -178,8 +179,9 @@ document.getElementById('swpanel')!.addEventListener('pointerdown',e=>{const p=p
 document.addEventListener('pointerup',releaseHeld);document.addEventListener('pointercancel',releaseHeld)
 document.getElementById('selectors')!.addEventListener('click',e=>{const l=(e.target as HTMLElement).closest('[data-sel]') as HTMLElement;if(!l)return;ensureAudio()
   const s=l.dataset.sel!;S['sel'+s]=S['sel'+s]==='ON'?'OFF':'ON';l.classList.toggle('on',S['sel'+s]==='ON');logMsg('Seletora '+(s==='L'?'esquerda':'direita')+' → '+S['sel'+s],S['sel'+s]==='ON'?'':'e-warn')})
-document.getElementById('emergSlot')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest('[data-emerg]') as HTMLElement;if(!b)return;ensureAudio()
-  S.emergPwr=b.dataset.emerg;if(S.emergPwr==='NORMAL')rec('EMERG_NORMAL');logMsg('Emerg Power → '+(S.emergPwr==='NORMAL'?'NORMAL':'À FRENTE'),S.emergPwr==='NORMAL'?'':'e-bad');renderEmerg()})
+document.getElementById('emergSlot')!.addEventListener('click',e=>{ensureAudio();const lab=(e.target as HTMLElement).closest('[data-emerg]') as HTMLElement
+  S.emergPwr=lab?lab.dataset.emerg:(S.emergPwr==='NORMAL'?'FWD':'NORMAL')
+  if(S.emergPwr==='NORMAL')rec('EMERG_NORMAL');logMsg('Emerg Power → '+(S.emergPwr==='NORMAL'?'NORMAL':'À FRENTE'),S.emergPwr==='NORMAL'?'':'e-bad');renderEmerg()})
 // (FUEL CONDITION agora é a manete fixa à direita — ver setupFclever / setFuelCondition)
 // (OAT agora é definido pela 'Temperatura / Condição' na tela inicial)
 function renderGpu(){document.querySelectorAll('#gpuseg button').forEach(b=>(b as HTMLElement).classList.toggle('active',(((b as HTMLElement).dataset.gpu==='on')===S.gpuConnected)))}
@@ -252,7 +254,7 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   // starter realmente motorizando (energizado): switch START/MOTOR, sem corte do sensor, com energia
   const cranking=S.starter&&!S.starterCutBySensor&&P&&canCrankNow()&&(S.starterMode!=='MOTOR'||S.ignition==='NORM')
   if(cranking&&S.crankStartT==null)S.crankStartT=S.t
-  if(!S.fireActive&&S.activePane==='fire'&&S.crankStartT!=null&&(S.t-S.crankStartT)>S.fireDelay){S.fireActive=true;if(S.paneOnset==null)S.paneOnset=S.t;logMsg('⚠ ENGINE FIRE durante a partida!','e-bad')}
+  if(!S.fireActive&&S.activePane==='fire'&&S.crankStartT!=null&&(S.t-S.crankStartT)>S.fireDelay){S.fireActive=true;if(S.paneOnset==null)S.paneOnset=S.t;logMsg('ENGINE FIRE durante a partida!','e-bad')}
   // ciclo do starter conta enquanto o motor está energizado (até o auto-corte ou OFF)
   if(cranking){S.starterTimer+=dt;S.starterMax=Math.max(S.starterMax,S.starterTimer);if(S.starterTimer>30&&!S.starterCycleExceed){S.starterCycleExceed=true;logMsg('Ciclo do starter excedeu 30 s — respeite o resfriamento!','e-bad')}}
   if(!S.lit&&(S.fuelCondition==='LOW'||S.fuelCondition==='HIGH')&&ignOn&&fuelAvail&&P&&S.activePane!=='noLight'){S.lit=true;S.lightT=0
@@ -260,7 +262,7 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   if(S.lit)S.lightT+=dt
   // auto-corte do starter pelo sensor de velocidade a 46% Ng (ou falha do sensor)
   if(S.starter&&S.starterMode==='START'&&S.Ng>=AUTOCUT&&!S.starterCutBySensor&&!S.sensorStuck){
-    if(S.scenario==='sensorFail'){S.sensorStuck=true;S.firedSensorFail=true;if(S.paneOnset==null)S.paneOnset=S.t;logMsg('⚠ Sensor de velocidade NÃO desacoplou o starter a 46% Ng — STARTER ON deveria apagar','e-bad')}
+    if(S.scenario==='sensorFail'){S.sensorStuck=true;S.firedSensorFail=true;if(S.paneOnset==null)S.paneOnset=S.t;logMsg('Sensor de velocidade NÃO desacoplou o starter a 46% Ng — STARTER ON deveria apagar','e-bad')}
     else{S.starterCutBySensor=true;logMsg('Starter desacoplado pelo sensor a 46% Ng (modo gerador ao desligar)','e-good')}
   }
   // --- Ng: spool com tempo realista (~25-35 s); fase de "light" segura o Ng p/ a ITT dar o pico ---
@@ -288,7 +290,7 @@ function tick(now:number){let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;S.t+=
   if(S.lit&&S.activePane==='hotStart')bump*=2.1                               // PANE: partida quente (pico estoura)
   const ittEq=S.lit?(ittIdle+bump):S.oat
   S.ITT+=(ittEq-S.ITT)*(S.lit?2.0:1.0)*dt
-  S.peakITT=Math.max(S.peakITT,S.ITT);if(S.ITT>1090&&!S.firedHot){S.firedHot=true;S.hotStart=true;logMsg('⚠ HOT START — ITT > 1090°C! Leve FUEL CONDITION a CUTOFF','e-bad')}
+  S.peakITT=Math.max(S.peakITT,S.ITT);if(S.ITT>1090&&!S.firedHot){S.firedHot=true;S.hotStart=true;logMsg('HOT START — ITT > 1090°C! Leve FUEL CONDITION a CUTOFF','e-bad')}
   if(S.activePane&&S.paneOnset==null){const p=S.activePane
     if(p==='hotStart'&&S.lit&&S.ITT>850)S.paneOnset=S.t
     else if(p==='hungStart'&&S.lit&&S.lightT>3&&S.Ng<45)S.paneOnset=S.t
